@@ -1,0 +1,207 @@
+.admin-dashboard {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #FAF5E4;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-dashboard h2 {
+    color: #C6632C;
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    font-weight: bold;
+}
+
+.admin-dashboard form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.5rem;
+    background: #FBEAD8;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.admin-dashboard input,
+.admin-dashboard textarea,
+.admin-dashboard label {
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    border: 1px solid #C6632C;
+    border-radius: 4px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.3s ease-in-out;
+}
+
+.admin-dashboard textarea {
+    resize: none;
+    min-height: 100px;
+    line-height: 1.5;
+    overflow-y: auto;
+    font-family: inherit;
+}
+
+.admin-dashboard input:focus,
+.admin-dashboard textarea:focus {
+    border-color: #A54D22;
+    outline: none;
+}
+
+/* Checkbox Container */
+.admin-dashboard .checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.admin-dashboard input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* Button Styles */
+.admin-dashboard button {
+    background: #C6632C;
+    color: #FAF5E4;
+    border: none;
+    padding: 0.85rem;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    transition: background 0.3s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.admin-dashboard button:hover {
+    background: #A54D22;
+    transform: scale(1.05);
+}
+
+.admin-dashboard ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 1.5rem;
+}
+
+.admin-dashboard li {
+    padding: 1rem;
+    background: #FFF;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+.admin-dashboard li:hover {
+    transform: scale(1.02);
+}
+
+.admin-dashboard .item-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Delete and Update Button Styles */
+.admin-dashboard .delete-btn {
+    background-color: #d9534f;
+}
+
+.admin-dashboard .delete-btn:hover {
+    background-color: #c9302c;
+}
+
+.admin-dashboard .update-btn {
+    background-color: #5bc0de;
+}
+
+.admin-dashboard .update-btn:hover {
+    background-color: #31b0d5;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.7);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.modal-content h2 {
+    color: #C6632C;
+    margin-bottom: 1rem;
+}
+
+.modal-content input,
+.modal-content textarea {
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #C6632C;
+    border-radius: 4px;
+    font-size: 1rem;
+    line-height: 1.5;
+    box-sizing: border-box;
+}
+
+.modal-content textarea {
+    resize: none;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+/* Modal Checkbox Styling */
+.modal-content .checkbox-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-content .checkbox-container input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* Modal Actions */
+.modal-content .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.modal-content button {
+    padding: 0.75rem 1.5rem;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
