@@ -25,15 +25,15 @@ const HomePage = () => {
       <HeroSection />
 
       <section className="py-10 px-4 max-w-7xl mx-auto">
+        <h2 className="text-3xl font-bold mb-6 text-center text-foreground">
+          Featured Items
+        </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {featuredItems.map((item) => (
             <div
               key={item.id}
               className="bg-card rounded shadow p-4 flex flex-col items-center"
             >
-              <h2 className="text-3xl font-bold mb-6 text-center text-foreground">
-                Featured Items
-              </h2>
               <img
                 className="w-full h-48 object-cover rounded mb-4"
                 src={item.imageUrl || "/images/placeholder.png"}
