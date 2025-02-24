@@ -87,15 +87,15 @@
   }
 
   .theme-orange {
-    --background: 33 100% 94%; /* ~ orange-100 => hsl(33,100%,94%) */
-    --foreground: 0 0% 15%; /* darker text color */
-    --card: 0 0% 100%; /* white card */
+    --background: 33 100% 94%;
+    --foreground: 0 0% 15%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 10%;
-    --primary: 24 87% 53%; /* ~ orange-600 => hsl(24,87%,53%) */
-    --primary-foreground: 0 0% 100%; /* white text */
-    --secondary: 24 100% 90%; /* lighter orange for secondary */
+    --primary: 24 87% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 24 100% 90%;
     --secondary-foreground: 24 87% 20%;
     --muted: 24 100% 95%;
     --muted-foreground: 24 87% 30%;
@@ -111,6 +111,53 @@
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .theme-red-black {
+    /* Overall Background & Text */
+    --background: 0 0% 100%; /* White */
+    --foreground: 0 0% 10%; /* Very dark gray (near black) for text */
+
+    /* Cards & Popovers */
+    --card: 0 0% 96%; /* Light gray background for cards */
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    /* Primary: Red (matches the logo) */
+    --primary: 0 100% 45%; /* Vivid red; tweak lightness/saturation as needed */
+    --primary-foreground: 0 0% 100%; /* White text on red buttons */
+
+    /* Secondary: Light Gray or Soft White */
+    --secondary: 0 0% 95%;
+    --secondary-foreground: 0 0% 10%;
+
+    /* Muted Elements */
+    --muted: 0 0% 90%; /* Slightly darker gray for subtle backgrounds */
+    --muted-foreground: 0 0% 20%;
+
+    /* Accent: Yellow (small touches) */
+    --accent: 45 100% 50%; /* Bright golden yellow */
+    --accent-foreground: 0 0% 15%;
+
+    /* Destructive (if needed, can also be red) */
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Borders, Inputs, & Ring Focus */
+    --border: 0 0% 80%;
+    --input: 0 0% 100%;
+    --ring: 0 100% 45%;
+
+    /* Chart Colors (if you use charts) */
+    --chart-1: 0 100% 45%; /* Red */
+    --chart-2: 0 0% 40%; /* Dark gray */
+    --chart-3: 0 0% 65%; /* Medium gray */
+    --chart-4: 45 100% 50%; /* Yellow */
+    --chart-5: 0 0% 20%; /* Very dark gray */
+
+    /* Radius for UI elements */
     --radius: 0.5rem;
   }
 }

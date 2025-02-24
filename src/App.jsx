@@ -1,20 +1,20 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
-import MenuPage from "./pages/MenuPage";
-import CartPage from "./pages/CartPage";
-import CheckoutPage from "./pages/CheckoutPage";
-import PaymentMethodSelection from "./pages/PaymentMethodSelection";
-import StripePaymentPage from "./pages/StripePaymentPage";
-import PayPalPaymentPage from "./pages/PayPalPaymentPage";
-import ApplePayPaymentPage from "./pages/ApplePayPaymentPage";
-import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import MenuPage from "./pages/ordering/MenuPage";
+import CartPage from "./pages/ordering/CartPage";
+import CheckoutPage from "./pages/ordering/CheckoutPage";
+import PaymentMethodSelection from "./pages/payments/PaymentMethodSelection";
+import StripePaymentPage from "./pages/payments/StripePaymentPage";
+import PayPalPaymentPage from "./pages/payments/PayPalPaymentPage";
+import ApplePayPaymentPage from "./pages/payments/ApplePayPaymentPage";
+import PaymentSuccessPage from "./pages/payments/PaymentSuccessPage";
 import { Toaster } from "react-hot-toast";
 import AppLayout from "./layout/AppLayout";
-import AdminOrders from "./pages/AdminOrders";
-import AdminAllOrders from "./pages/AdminAllOrders";
-import AdminDashboard from "./pages/AdminDashboard";
-import LoginPage from "./pages/LoginPage";
+import AdminOrders from "./pages/admin/AdminOrders";
+import AdminAllOrders from "./pages/admin/AdminAllOrders";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import LoginPage from "./pages/admin/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./AuthContext";
 
@@ -49,7 +49,6 @@ function AppRoutes() {
               path="/admin/orders"
               element={
                 <ProtectedRoute>
-                  {/* <AdminOrders /> */}
                   <AdminAllOrders />
                 </ProtectedRoute>
               }

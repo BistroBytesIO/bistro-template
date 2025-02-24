@@ -1,5 +1,5 @@
 {
-  "name": "la-cocina-frontend",
+  "name": "bistro-template",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -18,7 +18,7 @@
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "la-cocina-frontend": "file:",
+    "bistro-template": "file:",
     "lucide-react": "^0.473.0",
     "ngrok": "^5.0.0-beta.2",
     "react": "^18.3.1",

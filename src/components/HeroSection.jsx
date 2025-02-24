@@ -9,13 +9,15 @@ const HeroSection = () => {
     <section className="bg-secondary w-full py-10 px-4">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="md:w-1/2 space-y-6">
-          <h1 className="text-4xl font-extrabold text-gray-900">
-            Discover the Flavor of Mexico
-          </h1>
+          <h1 className="text-4xl font-extrabold text-gray-900">Hero Title</h1>
           <p className="text-gray-700 leading-relaxed">
-            Treat your taste buds to our famous Fiesta Platter! A hearty mix of
-            charbroiled chicken, beef fajitas, and sides like Mexican rice,
-            refried beans, and guacamole.
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+            aliquip ex ea commodo consequat. Duis aute irure dolor in
+            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
+            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
+            culpa qui officia deserunt mollit anim id est laborum.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
             <Button
@@ -28,7 +30,7 @@ const HeroSection = () => {
               className="text-primary underline font-medium"
               target="_blank"
               rel="noopener noreferrer"
-              href="https://lacocinarestaurant.com/wp-content/uploads/2024/11/LaCocina_takeout_menu02212024.pdf"
+              href="/#"
             >
               View Full Menu
             </a>
@@ -38,13 +40,13 @@ const HeroSection = () => {
         <div className="md:w-1/2 flex flex-col md:flex-row items-center gap-6 md:gap-4">
           <img
             className="w-full md:w-1/2 object-cover rounded shadow"
-            src="https://res.cloudinary.com/dsjo25xrv/image/upload/v1736985616/award-winning-fajitas-for-2_tpackk.png"
-            alt="Fiesta Platter"
+            src="bistroLogo.png"
+            alt="(CHANGE)"
           />
           <img
             className="w-full md:w-1/2 object-cover rounded shadow"
-            src="https://res.cloudinary.com/dsjo25xrv/image/upload/v1737062552/fiesta-fajita-packs_clm7x6.png"
-            alt="Guacamole"
+            src="bistroLogo.png"
+            alt="(CHANGE)"
           />
         </div>
       </div>

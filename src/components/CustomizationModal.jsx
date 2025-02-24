@@ -144,7 +144,7 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
 
             <Button
               onClick={handleAddToCart}
-              className="w-full bg-primary text-primary-foreground hover:opacity-90"
+              className="w-full bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary"
             >
               Add to Cart
             </Button>

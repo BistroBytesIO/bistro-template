@@ -43,8 +43,8 @@ const NavBar = () => {
       <div className="flex items-center pl-4">
         <Link to={isAdminRoute ? "/admin/dashboard" : "/"}>
           <img
-            src="/src/assets/LaCocina_logo.png"
-            alt="La Cocina Logo"
+            src="bistroLogo.png"
+            alt="Bistro Logo"
             className={`transition-all duration-300
               ${isShrunk ? "h-12" : "h-[100px]"}`}
           />
@@ -71,18 +71,14 @@ const NavBar = () => {
           <>
             <Button
               onClick={() => navigate("/menu")}
-              className="bg-secondary hover:bg-background text-black flex items-center gap-2"
+              className="bg-secondary hover:bg-accent text-black flex items-center gap-2"
             >
               <HandPlatter />
               <span className="hidden md:inline">Order Online</span>
             </Button>
 
-            <Button className="flex items-center gap-2 bg-black text-secondary hover:bg-foreground">
-              <Link
-                to="https://lacocinarestaurant.com/wp-content/uploads/2024/11/LaCocina_takeout_menu02212024.pdf"
-                target="_blank"
-                className="flex items-center gap-2"
-              >
+            <Button className="flex items-center gap-2 bg-black text-secondary hover:bg-black hover:text-accent">
+              <Link to="/#" target="_blank" className="flex items-center gap-2">
                 <ScrollText />
                 <span className="hidden md:inline">Menu</span>
               </Link>
@@ -90,7 +86,7 @@ const NavBar = () => {
 
             <Button
               onClick={openCart}
-              className="flex items-center gap-2 bg-black text-secondary hover:bg-foreground"
+              className="flex items-center gap-2 bg-black text-secondary hover:bg-black hover:text-accent"
             >
               <ShoppingCart />
               <span className="hidden md:inline">Cart</span>
@@ -99,7 +95,7 @@ const NavBar = () => {
 
             <Button
               onClick={() => navigate("/checkout")}
-              className="flex items-center gap-2 bg-black text-secondary hover:bg-foreground"
+              className="flex items-center gap-2 bg-black text-secondary hover:bg-black hover:text-accent"
             >
               <Utensils />
               <span className="hidden md:inline">Checkout</span>

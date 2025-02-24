@@ -15,7 +15,12 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const htmlElement = document.documentElement;
 
-    htmlElement.classList.remove("dark", "theme-blue", "theme-orange");
+    htmlElement.classList.remove(
+      "dark",
+      "theme-blue",
+      "theme-orange",
+      "theme-red-black"
+    );
 
     if (theme === "dark") {
       htmlElement.classList.add("dark");
@@ -23,8 +28,9 @@ export const ThemeProvider = ({ children }) => {
       htmlElement.classList.add("theme-blue");
     } else if (theme === "orange") {
       htmlElement.classList.add("theme-orange");
+    } else if (theme === "red-black") {
+      htmlElement.classList.add("theme-red-black");
     }
-
     localStorage.setItem("theme", theme);
   }, [theme]);
 

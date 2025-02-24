@@ -26,7 +26,7 @@ const HomePage = () => {
 
       <section className="py-10 px-4 max-w-7xl mx-auto">
         <h2 className="text-3xl font-bold mb-6 text-center text-foreground">
-          Featured Items
+          Featured Items Title
         </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {featuredItems.map((item) => (
@@ -64,14 +64,18 @@ const HomePage = () => {
           <div className="md:w-1/2 mb-6 md:mb-0">
             <h2 className="text-3xl font-bold mb-4">About Us</h2>
             <p className="mb-4">
-              At La Cocina, we pride ourselves on delivering the finest culinary
-              experiences. From our authentic recipes to our warm hospitality,
-              every moment is crafted with care.
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+              enim ad minim veniam, quis nostrud exercitation ullamco laboris
+              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
+              reprehenderit in voluptate velit esse cillum dolore eu fugiat
+              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+              sunt in culpa qui officia deserunt mollit anim id est laborum.
             </p>
           </div>
           <div className="md:w-1/2">
             <img
-              src="https://res.cloudinary.com/dsjo25xrv/image/upload/v1737064382/restaurant-interior-google-review_erxbgk.jpg"
+              src="bistroLogo.png"
               alt="Restaurant Interior"
               className="w-full h-auto rounded shadow"
             />
@@ -79,18 +83,16 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Instead of bg-orange-600 => .bg-primary, text-white => .text-primary-foreground */}
       <section className="bg-primary text-primary-foreground py-10 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Contact Us</h2>
           <p className="mb-2">
             Phone:{" "}
             <a href="tel:2812380872" className="underline hover:opacity-80">
-              (281) 238-0872
+              (###) ###-####
             </a>
           </p>
-          <p className="mb-4">Address: 515 FM359, Richmond, TX 77406</p>
-          {/* Here, if you want a lighter button, you could do .bg-card .text-foreground, etc. */}
+          <p className="mb-4">Address: Lorum ipsum</p>
           <Button className="bg-secondary text-black hover:bg-background">
             Make a Reservation
           </Button>
