@@ -45,7 +45,7 @@ const NavBar = () => {
           <img
             src="bullpen.jpg"
             alt="Bistro Logo"
-            className={`transition-all duration-300 rounded-xl
+            className={`transition-all duration-300 rounded-2xl
               ${isShrunk ? "h-12" : "h-[100px]"}`}
           />
         </Link>
