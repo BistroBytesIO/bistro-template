@@ -74,7 +74,7 @@ const MenuPage = () => {
           <select
             value={selectedCategory}
             onChange={handleCategoryChange}
-            className="border border-gray-300 rounded p-2 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="border border-gray-300 rounded p-2 pr-8 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">All Categories</option>
             {categories.map((category) => (
