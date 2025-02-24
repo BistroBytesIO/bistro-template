@@ -1,5 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../../AuthContext";
+import { Button } from "@/components/ui/button";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -37,7 +38,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="login-container">
+    <div className="login-container bg-card flex flex-col just">
       <h2>Admin Login</h2>
       <form onSubmit={handleSubmit}>
         <input
@@ -56,9 +57,14 @@ function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button className="login-button-submit" type="submit">
-          Login
-        </button>
+        <div className="flex justify-center items-center">
+          <Button
+            className="bg-primary hover:bg-primary-foreground hover:text-primary"
+            type="submit"
+          >
+            Login
+          </Button>
+        </div>
       </form>
     </div>
   );

@@ -44,7 +44,7 @@ const NavBar = () => {
         <Link to={isAdminRoute ? "/admin/dashboard" : "/"}>
           <img
             src="bullpen.jpg"
-            alt="Bistro Logo"
+            alt="Bullpen"
             className={`transition-all duration-300 rounded-2xl
               ${isShrunk ? "h-12" : "h-[100px]"}`}
           />
