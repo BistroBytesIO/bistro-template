@@ -25,15 +25,15 @@ const HomePage = () => {
       <HeroSection />
 
       <section className="py-10 px-4 max-w-7xl mx-auto">
-        <h2 className="text-3xl font-bold mb-6 text-center text-foreground">
-          Featured Items Title
-        </h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {featuredItems.map((item) => (
             <div
               key={item.id}
               className="bg-card rounded shadow p-4 flex flex-col items-center"
             >
+              <h2 className="text-3xl font-bold mb-6 text-center text-foreground">
+                Featured Items
+              </h2>
               <img
                 className="w-full h-48 object-cover rounded mb-4"
                 src={item.imageUrl || "/images/placeholder.png"}
@@ -62,20 +62,21 @@ const HomePage = () => {
       <section className="py-10 px-4 max-w-7xl mx-auto text-foreground">
         <div className="flex flex-col md:flex-row md:items-center md:space-x-8">
           <div className="md:w-1/2 mb-6 md:mb-0">
-            <h2 className="text-3xl font-bold mb-4">About Us</h2>
+            <h2 className="text-3xl font-bold mb-4">About Bullpen Pizza</h2>
             <p className="mb-4">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
-              enim ad minim veniam, quis nostrud exercitation ullamco laboris
-              nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in
-              reprehenderit in voluptate velit esse cillum dolore eu fugiat
-              nulla pariatur. Excepteur sint occaecat cupidatat non proident,
-              sunt in culpa qui officia deserunt mollit anim id est laborum.
+              Bullpen Pizza has been serving up delicious, handcrafted pizzas to
+              the local community with a passion for quality and flavor. Our
+              chefs use time-honored techniques to ensure every slice has the
+              perfect balance of crispy crust, tangy sauce, and mouthwatering
+              toppings. From our cozy dining area to our friendly staff,
+              everything we do is designed to make you feel right at home. Come
+              join us for a slice—or two—and discover why we’re the talk of the
+              town.
             </p>
           </div>
           <div className="md:w-1/2">
             <img
-              src="bistroLogo.png"
+              src="pizzaria.jpg"
               alt="Restaurant Interior"
               className="w-full h-auto rounded shadow"
             />
@@ -87,13 +88,15 @@ const HomePage = () => {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Contact Us</h2>
           <p className="mb-2">
-            Phone:{" "}
+            Phone:
             <a href="tel:2812380872" className="underline hover:opacity-80">
-              (###) ###-####
+              (281) 242-0190
             </a>
           </p>
-          <p className="mb-4">Address: Lorum ipsum</p>
-          <Button className="bg-secondary text-black hover:bg-background">
+          <p className="mb-4">
+            Address: 14019 Southwest Fwy, Ste 204, Sugar Land, TX 77478
+          </p>
+          <Button className="bg-secondary text-black hover:bg-accent">
             Make a Reservation
           </Button>
         </div>

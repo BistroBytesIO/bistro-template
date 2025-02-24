@@ -9,20 +9,20 @@ const HeroSection = () => {
     <section className="bg-secondary w-full py-10 px-4">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="md:w-1/2 space-y-6">
-          <h1 className="text-4xl font-extrabold text-gray-900">Hero Title</h1>
+          <h1 className="text-4xl font-extrabold text-gray-900">
+            Taste the Best Pizza in Town
+          </h1>
           <p className="text-gray-700 leading-relaxed">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
-            ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-            aliquip ex ea commodo consequat. Duis aute irure dolor in
-            reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-            pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-            culpa qui officia deserunt mollit anim id est laborum.
+            At BullPen Pizza, we believe every pizza should be a
+            masterpiece—hand-tossed dough, zesty sauce made from scratch, and
+            only the freshest toppings. Whether you’re craving a classic
+            Margherita or something a little more adventurous, we’ve got you
+            covered.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
             <Button
               onClick={() => navigate("/menu")}
-              className="text-background font-semibold"
+              className="text-background font-semibold hover:bg-primary-foreground hover:text-primary"
             >
               Order Now
             </Button>
@@ -37,16 +37,16 @@ const HeroSection = () => {
           </div>
         </div>
 
-        <div className="md:w-1/2 flex flex-col md:flex-row items-center gap-6 md:gap-4">
+        <div className="md:w-1/2 flex flex-col md:flex-row items-center gap-6 md:gap-4 mx-4">
           <img
             className="w-full md:w-1/2 object-cover rounded shadow"
-            src="bistroLogo.png"
-            alt="(CHANGE)"
+            src="pizza1.jpg"
+            alt="pizza"
           />
           <img
             className="w-full md:w-1/2 object-cover rounded shadow"
-            src="bistroLogo.png"
-            alt="(CHANGE)"
+            src="pizza2.jpg"
+            alt="pizza"
           />
         </div>
       </div>

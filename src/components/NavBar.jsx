@@ -43,9 +43,9 @@ const NavBar = () => {
       <div className="flex items-center pl-4">
         <Link to={isAdminRoute ? "/admin/dashboard" : "/"}>
           <img
-            src="bistroLogo.png"
+            src="bullpen.jpg"
             alt="Bistro Logo"
-            className={`transition-all duration-300
+            className={`transition-all duration-300 rounded-xl
               ${isShrunk ? "h-12" : "h-[100px]"}`}
           />
         </Link>
