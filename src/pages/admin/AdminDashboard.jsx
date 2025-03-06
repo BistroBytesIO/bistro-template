@@ -16,6 +16,13 @@ function AdminDashboard() {
     stockQuantity: "",
     isFeatured: false,
   });
+  const [modalForm, setModalForm] = useState({
+    name: "",
+    description: "",
+    price: "",
+    stockQuantity: "",
+    isFeatured: false,
+  });
   const { logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,6 +57,10 @@ function AdminDashboard() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleModalChange = (e) => {
+    setModalForm({ ...modalForm, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -74,7 +85,7 @@ function AdminDashboard() {
 
   const handleUpdateClick = (item) => {
     setSelectedItem(item);
-    setForm({
+    setModalForm({
       name: item.name,
       description: item.description,
       price: item.price,
@@ -85,9 +96,10 @@ function AdminDashboard() {
   };
 
   const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
     setUpdateLoading(true);
     try {
-      await adminApi.put(`/admin/menu/${selectedItem.id}`, form);
+      await adminApi.put(`/admin/menu/${selectedItem.id}`, modalForm);
       toast.success("Item successfully updated!");
       setIsModalOpen(false);
       fetchMenuItems();
@@ -96,7 +108,7 @@ function AdminDashboard() {
       console.error("Error updating item:", error);
     } finally {
       setUpdateLoading(false);
-      setForm({
+      setModalForm({
         name: "",
         description: "",
         price: "",
@@ -269,39 +281,39 @@ function AdminDashboard() {
           <input
             type="text"
             name="name"
-            value={form.name}
-            onChange={handleChange}
+            value={modalForm.name}
+            onChange={handleModalChange}
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-primary"
           />
           <textarea
             name="description"
             rows="4"
-            value={form.description}
-            onChange={handleChange}
+            value={modalForm.description}
+            onChange={handleModalChange}
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-primary resize-none"
           />
           <input
             type="number"
             name="price"
             step="0.01"
-            value={form.price}
-            onChange={handleChange}
+            value={modalForm.price}
+            onChange={handleModalChange}
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-primary"
           />
           <input
             type="number"
             name="stockQuantity"
-            value={form.stockQuantity}
-            onChange={handleChange}
+            value={modalForm.stockQuantity}
+            onChange={handleModalChange}
             className="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-primary"
           />
           <div className="flex items-center space-x-2">
             <input
               type="checkbox"
               name="isFeatured"
-              checked={form.isFeatured}
+              checked={modalForm.isFeatured}
               onChange={(e) =>
-                setForm({ ...form, isFeatured: e.target.checked })
+                setModalForm({ ...modalForm, isFeatured: e.target.checked })
               }
             />
             <label>Featured Item</label>
@@ -321,7 +333,7 @@ function AdminDashboard() {
             <Button
               type="button"
               onClick={() => {
-                setForm({
+                setModalForm({
                   name: "",
                   description: "",
                   price: "",

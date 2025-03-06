@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const adminApi = axios.create({
-  baseURL: "http://localhost:8080/api",
-  //   baseURL: "http://192.168.1.37:8080/api", // Ensure this is correct
+  // baseURL: "http://localhost:8080/api",
+    baseURL: import.meta.env.VITE_BASE_API_URL // Ensure this is correct
 });
 
 // Attach token to every request if available in localStorage

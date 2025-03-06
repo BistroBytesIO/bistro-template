@@ -8,7 +8,7 @@ import { getCategories } from "../../services/CategoryService";
 import { Button } from "@/components/ui/button";
 
 const MenuPage = () => {
-  const [menuItems, setMenuItems] = useState([]);
+  const [allMenuItems, setAllMenuItems] = useState([]); // Renamed for clarity
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedItemId, setSelectedItemId] = useState(null);
@@ -30,19 +30,18 @@ const MenuPage = () => {
     fetchCategories();
   }, []);
 
+  // Fetch all menu items on mount
   useEffect(() => {
     const fetchMenuItems = async () => {
       try {
-        const params = selectedCategory ? { categoryId: selectedCategory } : {};
-        const data = await getMenuItems(params);
-        setMenuItems(data);
+        const data = await getMenuItems(); // No params needed
+        setAllMenuItems(data);
       } catch (error) {
         console.error("Failed to fetch menu items:", error);
       }
     };
-
     fetchMenuItems();
-  }, [selectedCategory]);
+  }, []); // Empty dependency array = runs once on mount
 
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value || "");
@@ -63,6 +62,11 @@ const MenuPage = () => {
   };
 
   const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
+
+  // Filter menu items locally based on selectedCategory
+  const filteredMenuItems = selectedCategory
+    ? allMenuItems.filter((item) => item.categoryId === parseInt(selectedCategory))
+    : allMenuItems;
 
   return (
     <div className="bg-background min-h-screen">
@@ -86,7 +90,7 @@ const MenuPage = () => {
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded shadow p-4 flex flex-col"
