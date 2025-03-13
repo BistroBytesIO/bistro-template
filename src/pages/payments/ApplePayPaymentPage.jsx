@@ -5,7 +5,7 @@ import { Elements, PaymentRequestButtonElement } from "@stripe/react-stripe-js";
 import api from "../../services/api";
 
 const stripePromise = loadStripe(
-  "pk_test_51Qh2TACsY3eILNq5VJbPkcUQIouI2qA94JXochuGyrSx9xA0BvYs0h5U1jDZzW5aMIiE99m5P3A91VGcp7KINEbL00rCB0HoX8"
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
 );
 
 const ApplePayPaymentPage = () => {
