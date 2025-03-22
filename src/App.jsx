@@ -17,11 +17,13 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import LoginPage from "./pages/admin/LoginPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { AuthProvider } from "./AuthContext";
+import ScrollToTop from "./components/ScrollToTop";
 
 function AppRoutes() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ScrollToTop />
         <Routes>
           <Route element={<AppLayout />}>
             <Route path="/" element={<HomePage />} />

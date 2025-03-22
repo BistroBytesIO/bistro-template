@@ -11,7 +11,8 @@ const AppLayout = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <NavBar />
-      <main className="flex-1 pt-[150px]">
+      {/* Update padding to be responsive: smaller on mobile, larger on desktop */}
+      <main className="flex-1 pt-20 md:pt-28 lg:pt-[150px]">
         <Outlet />
       </main>
       <Footer />
