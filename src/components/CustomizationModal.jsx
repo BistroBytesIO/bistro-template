@@ -7,12 +7,17 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
   const [customizations, setCustomizations] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [error, setError] = useState("");
+  
+  // For debugging
+  useEffect(() => {
+    console.log("Selected options updated:", selectedOptions);
+  }, [selectedOptions]);
 
   useEffect(() => {
     if (isOpen) {
       fetchCustomizations();
     }
-  }, [isOpen]);
+  }, [isOpen, menuItemId]);
 
   const fetchCustomizations = async () => {
     try {
@@ -20,12 +25,36 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
       setMenuItem(data.menuItem);
       setCustomizations(data.customizations);
 
+      // Create a map to organize customizations by group
+      const customizationsByGroup = {};
+      data.customizations.forEach(c => {
+        if (!customizationsByGroup[c.groupName]) {
+          customizationsByGroup[c.groupName] = [];
+        }
+        customizationsByGroup[c.groupName].push(c);
+      });
+
+      // Initialize selections based on groupName and choiceType
       const initialSelections = {};
-      data.customizations.forEach((c) => {
-        if (c.isDefault) {
-          initialSelections[c.group] = c.id;
+      Object.entries(customizationsByGroup).forEach(([groupName, groupItems]) => {
+        const firstItem = groupItems[0];
+        
+        if (firstItem.choiceType === 'single') {
+          // For single choice, find the default option or use the first one
+          const defaultOption = groupItems.find(item => item.isDefault);
+          if (defaultOption) {
+            initialSelections[groupName] = defaultOption.id;
+          } else if (groupItems.length > 0) {
+            // If no default, select the first option for single choice
+            initialSelections[groupName] = groupItems[0].id;
+          }
+        } else if (firstItem.choiceType === 'multiple') {
+          // For multiple choice, initialize with empty array (nothing selected)
+          // This change makes multiple-choice options opt-in rather than opt-out
+          initialSelections[groupName] = [];
         }
       });
+      
       setSelectedOptions(initialSelections);
     } catch (err) {
       console.error("Failed to fetch customizations:", err);
@@ -36,56 +65,98 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
   const handleOptionSelect = (customization) => {
     setSelectedOptions((prev) => {
       if (customization.choiceType === "single") {
+        // For single choice items, simply replace the selection
         return {
           ...prev,
           [customization.groupName]: customization.id,
         };
+      } else {
+        // For multiple choice items, toggle selection
+        const selectedGroup = Array.isArray(prev[customization.groupName]) 
+          ? [...prev[customization.groupName]] 
+          : [];
+        
+        const isSelected = selectedGroup.includes(customization.id);
+        
+        if (isSelected) {
+          // Remove if already selected
+          return {
+            ...prev,
+            [customization.groupName]: selectedGroup.filter(id => id !== customization.id)
+          };
+        } else {
+          // Add if not selected
+          return {
+            ...prev,
+            [customization.groupName]: [...selectedGroup, customization.id]
+          };
+        }
       }
-      const selectedGroup = prev[customization.groupName] || [];
-      const isSelected = selectedGroup.includes(customization.id);
-      return {
-        ...prev,
-        [customization.groupName]: isSelected
-          ? selectedGroup.filter((optId) => optId !== customization.id)
-          : [...selectedGroup, customization.id],
-      };
     });
   };
 
   const handleAddToCart = () => {
     if (!menuItem) return;
 
-    const selectedAddOnIds = Object.values(selectedOptions).flat();
-    const selectedAddOns = customizations.filter((c) =>
-      selectedAddOnIds.includes(c.id)
+    // Gather all selected customization IDs from all groups
+    let selectedCustomizationIds = [];
+    
+    // Process different groups and their selections
+    Object.entries(selectedOptions).forEach(([groupName, selection]) => {
+      if (Array.isArray(selection)) {
+        // Multiple choice selections
+        selectedCustomizationIds = [...selectedCustomizationIds, ...selection];
+      } else if (selection) {
+        // Single choice selection
+        selectedCustomizationIds.push(selection);
+      }
+    });
+
+    // Find the actual customization objects based on selected IDs
+    const selectedCustomizations = customizations.filter(c => 
+      selectedCustomizationIds.includes(c.id)
     );
 
-    const totalAddOnsCost = selectedAddOns.reduce(
-      (sum, addOn) => sum + parseFloat(addOn.price || 0),
+    // Calculate total price including customizations
+    const customizationsTotal = selectedCustomizations.reduce(
+      (sum, c) => sum + parseFloat(c.price || 0),
       0
     );
 
+    const totalPrice = parseFloat(menuItem.price || 0) + customizationsTotal;
+
+    // Create the customized item
     const customizedItem = {
       id: menuItem.id,
       name: menuItem.name,
       basePrice: parseFloat(menuItem.price || 0),
-      customizations: selectedAddOns,
-      totalPrice: parseFloat(menuItem.price || 0) + totalAddOnsCost,
+      customizations: selectedCustomizations,
+      totalPrice: totalPrice
     };
 
+    // Add to cart and close the modal
     onAddToCart(customizedItem);
     onClose();
   };
 
   if (!isOpen) return null;
 
+  // Group customizations by groupName for display
+  const groupedCustomizations = {};
+  customizations.forEach(c => {
+    if (!groupedCustomizations[c.groupName]) {
+      groupedCustomizations[c.groupName] = [];
+    }
+    groupedCustomizations[c.groupName].push(c);
+  });
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white rounded shadow p-6 relative w-full max-w-md mx-2">
+      <div className="bg-white rounded-lg shadow-xl p-6 relative w-full max-w-md mx-2 max-h-[90vh] overflow-y-auto">
         <Button
           onClick={onClose}
           variant="ghost"
-          className="absolute top-2 right-2"
+          className="absolute top-2 right-2 h-8 w-8 p-0 rounded-full"
         >
           &times;
         </Button>
@@ -99,47 +170,49 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
             <p className="mb-4">
               Base Price:{" "}
               <span className="font-semibold">
-                ${menuItem.price.toFixed(2)}
+                ${parseFloat(menuItem.price).toFixed(2)}
               </span>
             </p>
 
-            <h3 className="text-lg font-semibold mb-2">Customizations:</h3>
-            <div className="flex flex-col space-y-2 mb-4">
-              {customizations.map((customization) => {
-                const isSingle = customization.choiceType === "single";
-                const groupSelections =
-                  selectedOptions[customization.groupName] || [];
+            <div className="space-y-6 mb-6">
+              {Object.entries(groupedCustomizations).map(([groupName, items]) => (
+                <div key={groupName} className="border-t pt-4">
+                  <h3 className="text-lg font-semibold mb-3">{groupName}:</h3>
+                  <div className="space-y-2 pl-2">
+                    {items.map((customization) => {
+                      const isSingle = customization.choiceType === "single";
+                      const groupSelections = selectedOptions[customization.groupName];
+                      
+                      const isChecked = isSingle
+                        ? groupSelections === customization.id
+                        : Array.isArray(groupSelections) && groupSelections.includes(customization.id);
 
-                const isChecked = isSingle
-                  ? groupSelections === customization.id
-                  : groupSelections.includes(customization.id);
-
-                return (
-                  <label
-                    key={customization.id}
-                    className="flex items-center space-x-2"
-                  >
-                    <input
-                      type={isSingle ? "radio" : "checkbox"}
-                      name={
-                        isSingle
-                          ? `group-${customization.groupName}`
-                          : undefined
-                      }
-                      checked={isChecked}
-                      onChange={() => handleOptionSelect(customization)}
-                    />
-                    <span className="text-gray-800">
-                      {customization.name}
-                      {customization.price > 0 && (
-                        <span className="text-sm text-gray-600 ml-1">
-                          (+ ${customization.price.toFixed(2)})
-                        </span>
-                      )}
-                    </span>
-                  </label>
-                );
-              })}
+                      return (
+                        <label
+                          key={customization.id}
+                          className="flex items-center space-x-3 py-1 px-2 rounded hover:bg-gray-100"
+                        >
+                          <input
+                            type={isSingle ? "radio" : "checkbox"}
+                            name={isSingle ? `group-${customization.groupName}` : undefined}
+                            checked={isChecked}
+                            onChange={() => handleOptionSelect(customization)}
+                            className="h-5 w-5"
+                          />
+                          <span className="text-gray-800 flex-1">
+                            {customization.name}
+                            {parseFloat(customization.price) > 0 && (
+                              <span className="text-sm text-primary ml-1">
+                                (+ ${parseFloat(customization.price).toFixed(2)})
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
 
             <Button

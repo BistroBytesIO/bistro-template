@@ -12,6 +12,7 @@ import {
 import { CartContext } from "../../CartContext";
 import api from "../../services/api";
 import { Button } from "@/components/ui/button";
+import { ShoppingCart, Check, CreditCard, LockKeyhole } from "lucide-react";
 
 const stripePromise = loadStripe(
   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -77,7 +78,7 @@ const SplitPaymentForm = () => {
     if (orderId) {
       fetchPaymentIntent();
     }
-  }, [orderId]);
+  }, [orderId, subtotal]);
 
   const handleConfirmPayment = async (e) => {
     e.preventDefault();
@@ -116,60 +117,141 @@ const SplitPaymentForm = () => {
   };
 
   return (
-    <div className="bg-background min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white p-6 rounded shadow">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">
-          Checkout with Card
-        </h2>
+    <div className="bg-background min-h-screen py-10 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* Checkout Progress Indicator */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Payment</h1>
+          
+          {/* Responsive checkout progress indicator */}
+          <div className="flex flex-wrap items-center justify-center px-2">
+            {/* Cart step - completed */}
+            <div className="flex items-center mb-2 sm:mb-0">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white">
+                <ShoppingCart size={16} />
+              </div>
+              <div className="ml-2 mr-2 text-gray-800">Cart</div>
+              <div className="h-px w-6 sm:w-12 bg-primary hidden sm:block"></div>
+            </div>
+            
+            {/* Checkout step - completed */}
+            <div className="flex items-center mb-2 sm:mb-0">
+              <div className="flex sm:hidden items-center justify-center">
+                <div className="h-6 w-px bg-primary mx-1"></div>
+              </div>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white">
+                <Check size={16} />
+              </div>
+              <div className="ml-2 mr-2 text-gray-800">Checkout</div>
+              <div className="h-px w-6 sm:w-12 bg-primary hidden sm:block"></div>
+            </div>
+            
+            {/* Payment step */}
+            <div className="flex items-center">
+              <div className="flex sm:hidden items-center justify-center">
+                <div className="h-6 w-px bg-primary mx-1"></div>
+              </div>
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white">
+                <CreditCard size={16} />
+              </div>
+              <div className="ml-2 font-bold text-primary">Payment</div>
+            </div>
+          </div>
+        </div>
 
-        {error && (
-          <p className="bg-red-50 border border-red-200 text-red-600 p-2 rounded mb-4">
-            {error}
-          </p>
-        )}
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <div className="flex items-center justify-center mb-4 text-gray-700">
+            <LockKeyhole className="mr-2 text-green-600" size={20} />
+            <span>Secure payment processing</span>
+          </div>
+          
+          {orderId && (
+            <p className="text-center text-gray-700 mb-4">
+              Order #{orderId}
+            </p>
+          )}
 
-        {!clientSecret && (
-          <p className="text-gray-700">Loading payment details...</p>
-        )}
+          <div className="mb-6 p-3 bg-gray-50 rounded-lg">
+            <h2 className="text-lg font-medium text-center text-gray-800 mb-1">
+              Payment Details
+            </h2>
+            <p className="text-center text-gray-600 text-sm mb-0">
+              Please enter your card information to complete your purchase
+            </p>
+          </div>
 
-        {clientSecret && (
-          <form onSubmit={handleConfirmPayment} className="space-y-4">
-            <div>
-              <label className="block mb-1 font-semibold text-gray-700">
-                Card Number
-              </label>
-              <div className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2">
-                <CardNumberElement options={elementStyle} />
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded mb-4">
+              <p className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {error}
+              </p>
+            </div>
+          )}
+
+          {!clientSecret && (
+            <div className="flex justify-center py-8">
+              <div className="animate-pulse flex space-x-4 items-center">
+                <div className="h-3 w-3 bg-gray-300 rounded-full"></div>
+                <div className="h-3 w-3 bg-gray-300 rounded-full"></div>
+                <div className="h-3 w-3 bg-gray-300 rounded-full"></div>
               </div>
             </div>
+          )}
 
-            <div>
-              <label className="block mb-1 font-semibold text-gray-700">
-                Expiration Date
-              </label>
-              <div className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2">
-                <CardExpiryElement options={elementStyle} />
+          {clientSecret && (
+            <form onSubmit={handleConfirmPayment} className="space-y-4">
+              <div>
+                <label className="block mb-1 font-semibold text-gray-700">
+                  Card Number
+                </label>
+                <div className="border border-gray-300 rounded px-3 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+                  <CardNumberElement options={elementStyle} />
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block mb-1 font-semibold text-gray-700">
-                CVC
-              </label>
-              <div className="border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2">
-                <CardCvcElement options={elementStyle} />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1 font-semibold text-gray-700">
+                    Expiration Date
+                  </label>
+                  <div className="border border-gray-300 rounded px-3 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+                    <CardExpiryElement options={elementStyle} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block mb-1 font-semibold text-gray-700">
+                    CVC
+                  </label>
+                  <div className="border border-gray-300 rounded px-3 py-3 focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
+                    <CardCvcElement options={elementStyle} />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              disabled={!stripe || isConfirming}
-              className="bg-primary text-background w-full"
-            >
-              {isConfirming ? "Processing..." : "Confirm Payment"}
-            </Button>
-          </form>
-        )}
+              <Button
+                type="submit"
+                disabled={!stripe || isConfirming}
+                className="w-full mt-6 py-3 text-lg bg-primary text-white hover:bg-primary-foreground hover:text-primary"
+              >
+                {isConfirming ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing Payment...
+                  </div>
+                ) : (
+                  "Complete Payment"
+                )}
+              </Button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );
