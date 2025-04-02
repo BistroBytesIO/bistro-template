@@ -1,3 +1,4 @@
+// Enhanced AdminAllOrders with better tab navigation
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import AdminOrders from "./AdminOrders";
@@ -7,40 +8,39 @@ const AdminAllOrders = () => {
   const [activeTab, setActiveTab] = useState("orders");
 
   return (
-    <div className="p-4">
-      <div className="flex space-x-4 border-b pb-2 mb-4 justify-around items-center">
-        <p
-          className={
-            activeTab === "orders"
-              ? "font-bold bg-secondary px-[2%] rounded-xl"
-              : "px-[2%]"
-          }
-          onClick={() => setActiveTab("orders")}
-        >
-          Pending Orders
-        </p>
-        <p
-          className={
-            activeTab === "pickup"
-              ? "font-bold font-bold bg-secondary px-[2%] rounded-xl"
-              : "px-[2%]"
-          }
-          onClick={() => setActiveTab("pickup")}
-        >
-          Ready For Pickup
-        </p>
-      </div>
+    <div className="bg-gray-50 min-h-screen py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8 text-gray-800">Order Management</h1>
+        
+        {/* Enhanced Tab Navigation */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="flex border-b">
+            <button
+              className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+                activeTab === "orders"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setActiveTab("orders")}
+            >
+              Pending Orders
+            </button>
+            <button
+              className={`flex-1 py-4 px-6 text-center font-medium transition-colors ${
+                activeTab === "pickup"
+                  ? "border-b-2 border-primary text-primary"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+              onClick={() => setActiveTab("pickup")}
+            >
+              Ready For Pickup
+            </button>
+          </div>
+        </div>
 
-      {activeTab === "orders" && (
-        <div>
-          <AdminOrders />
-        </div>
-      )}
-      {activeTab === "pickup" && (
-        <div>
-          <AdminReadyForPickup />
-        </div>
-      )}
+        {activeTab === "orders" && <AdminOrders />}
+        {activeTab === "pickup" && <AdminReadyForPickup />}
+      </div>
     </div>
   );
 };

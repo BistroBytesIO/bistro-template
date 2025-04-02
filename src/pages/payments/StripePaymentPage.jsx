@@ -57,8 +57,13 @@ const SplitPaymentForm = () => {
   const [error, setError] = useState("");
   const [isConfirming, setIsConfirming] = useState(false);
 
+  const [hasCreatedIntent, setHasCreatedIntent] = useState(false);
+
   useEffect(() => {
     const fetchPaymentIntent = async () => {
+      // Skip if already initialized
+      if (hasCreatedIntent) return;
+
       try {
         const body = {
           paymentMethod: "STRIPE",
@@ -69,16 +74,17 @@ const SplitPaymentForm = () => {
         console.log("cost", body.amount);
         const res = await api.post(`/orders/${orderId}/pay/stripe`, body);
         setClientSecret(res.data.clientSecret);
+        setHasCreatedIntent(true); // Mark as created
       } catch (err) {
         setError("Failed to initialize payment. Please try again.");
         console.error(err);
       }
     };
 
-    if (orderId) {
+    if (orderId && !hasCreatedIntent) {
       fetchPaymentIntent();
     }
-  }, [orderId, subtotal]);
+  }, [orderId, subtotal, hasCreatedIntent]);
 
   const handleConfirmPayment = async (e) => {
     e.preventDefault();
@@ -102,8 +108,13 @@ const SplitPaymentForm = () => {
       }
 
       if (paymentIntent && paymentIntent.status === "succeeded") {
-        api.post(`/orders/${orderId}/confirmPayment/stripe`);
-        navigate(`/payment-success?orderId=${orderId}`);
+        try {
+          await api.post(`/orders/${orderId}/confirmPayment/stripe`);
+          navigate(`/payment-success?orderId=${orderId}`);
+        } catch (confirmError) {
+          console.error("Error confirming payment:", confirmError);
+          setError("Payment succeeded but confirmation failed. Please contact support.");
+        }
       } else {
         setError("Payment was not successful. Please try again.");
       }
@@ -122,7 +133,7 @@ const SplitPaymentForm = () => {
         {/* Checkout Progress Indicator */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">Payment</h1>
-          
+
           {/* Responsive checkout progress indicator */}
           <div className="flex flex-wrap items-center justify-center px-2">
             {/* Cart step - completed */}
@@ -133,7 +144,7 @@ const SplitPaymentForm = () => {
               <div className="ml-2 mr-2 text-gray-800">Cart</div>
               <div className="h-px w-6 sm:w-12 bg-primary hidden sm:block"></div>
             </div>
-            
+
             {/* Checkout step - completed */}
             <div className="flex items-center mb-2 sm:mb-0">
               <div className="flex sm:hidden items-center justify-center">
@@ -145,7 +156,7 @@ const SplitPaymentForm = () => {
               <div className="ml-2 mr-2 text-gray-800">Checkout</div>
               <div className="h-px w-6 sm:w-12 bg-primary hidden sm:block"></div>
             </div>
-            
+
             {/* Payment step */}
             <div className="flex items-center">
               <div className="flex sm:hidden items-center justify-center">
@@ -164,7 +175,7 @@ const SplitPaymentForm = () => {
             <LockKeyhole className="mr-2 text-green-600" size={20} />
             <span>Secure payment processing</span>
           </div>
-          
+
           {orderId && (
             <p className="text-center text-gray-700 mb-4">
               Order #{orderId}
