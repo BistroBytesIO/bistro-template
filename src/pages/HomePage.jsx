@@ -68,9 +68,10 @@ const HomePage = () => {
   };
 
   const businessHours = [
-    { day: "Monday - Thursday", hours: "11:00 AM - 9:00 PM" },
-    { day: "Friday - Saturday", hours: "11:00 AM - 10:00 PM" },
-    { day: "Sunday", hours: "12:00 PM - 8:00 PM" }
+    { day: "Monday", hours: "6:00 AM - 3:00 PM" },
+    { day: "Tuesday - Thursday", hours: "6:00 AM - 10:00 PM" },
+    { day: "Friday - Saturday", hours: "6:00 AM - 12:00 AM" },
+    { day: "Sunday", hours: "6:00 AM - 11:00 PM" }
   ];
 
   const renderRatingStars = (rating) => {
@@ -228,7 +229,7 @@ const HomePage = () => {
               <div className="h-64 md:h-80 rounded-lg overflow-hidden shadow-lg mb-4">
                 {/* Replace with actual Google Maps embed */}
                 <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3467.7655685831847!2d-95.5968!3d29.6256!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjnCsDM3JzMyLjIiTiA5NcKwMzUnNDguNSJX!5e0!3m2!1sen!2sus!4v1615824458367!5m2!1sen!2sus" 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d6937.880428809687!2d-95.61574002467269!3d29.605424175147665!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8640e6f209a63cd1%3A0x960a82ff235db60!2sTaqueria%20Mexicano%20Grill%20%26%20Bar!5e0!3m2!1sen!2sus!4v1743605528340!5m2!1sen!2sus" 
                   width="100%" 
                   height="100%" 
                   style={{ border: 0 }} 
@@ -239,12 +240,12 @@ const HomePage = () => {
               </div>
               <div className="flex items-center mb-3">
                 <MapPin className="mr-2" size={20} />
-                <p>123 Main Street, Suite 101, Your City, State 12345</p>
+                <p>15267 Southwest Fwy, Sugar Land, TX 77478</p>
               </div>
               <div className="flex items-center">
                 <Phone className="mr-2" size={20} />
-                <a href="tel:1234567890" className="underline hover:opacity-80">
-                  (123) 456-7890
+                <a href="tel:2813251028" className="underline hover:opacity-80">
+                  (281) 325-1028
                 </a>
               </div>
             </div>

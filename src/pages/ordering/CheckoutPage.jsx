@@ -32,7 +32,7 @@ const CheckoutPage = () => {
   // Calculate service fee and tax on page load or when subtotal changes
   useEffect(() => {
     const TAX_RATE = 0.0825; // Texas 8.25% sales tax
-    const fee = subtotal * 0.049 + 0.3;
+    const fee = subtotal * 0.029 + 0.3;
     const tax = subtotal * TAX_RATE;
 
     setServiceFee(fee);
