@@ -16,7 +16,7 @@ const NavBar = () => {
 
   // Use state to track if we're on mobile vs desktop
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  
+
   // Always shrink on mobile, handle dynamic shrinking on desktop
   const [isShrunk, setIsShrunk] = useState(isMobile);
 
@@ -43,10 +43,10 @@ const NavBar = () => {
 
     window.addEventListener("resize", handleResize);
     window.addEventListener("scroll", handleScroll);
-    
+
     // Initialize on mount
     handleResize();
-    
+
     return () => {
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
@@ -67,17 +67,17 @@ const NavBar = () => {
     >
       <div className="h-full px-4 flex items-center justify-between">
         {/* Logo */}
-        <Link to={isAdminRoute ? "/admin/dashboard" : "/"} className="flex items-center">
+        <Link to={isAdminRoute ? "/admin/dashboard" : "/"} className="flex items-center h-full">
           <img
-            src="bistroLogo.png"
+            src="bistro_bytes_final_transparent.png"
             alt="Bistro Logo"
-            className={`transition-all duration-300 rounded-2xl
-              ${isShrunk ? "h-12" : "h-16 md:h-[100px]"}`}
+            className={`transition-all duration-300 rounded-2xl object-contain
+      ${isShrunk ? "h-14" : "h-full max-h-[120px] py-1"}`}
           />
         </Link>
 
         {/* Mobile menu button */}
-        <button 
+        <button
           className="md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
@@ -170,15 +170,15 @@ const NavBar = () => {
                 <HandPlatter className="mr-2" />
                 Order Online
               </Button>
-              
-              <Button 
+
+              <Button
                 className="bg-black text-secondary hover:bg-black hover:text-accent w-full"
                 onClick={() => window.open("/#", "_blank")}
               >
                 <ScrollText className="mr-2" />
                 Menu
               </Button>
-              
+
               <Button
                 onClick={openCart}
                 className="bg-black text-secondary hover:bg-black hover:text-accent w-full"
@@ -186,7 +186,7 @@ const NavBar = () => {
                 <ShoppingCart className="mr-2" />
                 Cart {cartCount > 0 && `(${cartCount})`}
               </Button>
-              
+
               <Button
                 onClick={() => navigate("/checkout")}
                 className="bg-black text-secondary hover:bg-black hover:text-accent w-full"
