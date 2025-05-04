@@ -9,9 +9,9 @@ const HeroSection = () => {
   
   // Background images for the hero carousel
   const backgrounds = [
-    "/hero-bg-1.png",
-    "/hero-bg-2.png",
-    "/hero-bg-3.png"
+    "/ritas-hero-bg-1.png",
+    "/ritas-hero-bg-2.png",
+    "/ritas-hero-bg-3.png"
   ];
   
   // Auto rotate backgrounds
@@ -24,9 +24,9 @@ const HeroSection = () => {
 
   // Quick info items for badges
   const quickInfo = [
-    { icon: <Clock className="w-4 h-4" />, text: "Open Today: 11am - 10pm" },
+    { icon: <Clock className="w-4 h-4" />, text: "Open Today: 8am - 9pm" },
     { icon: <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />, text: "4.8 Rating" },
-    { icon: <MapPin className="w-4 h-4" />, text: "123 Main Street" }
+    { icon: <MapPin className="w-4 h-4" />, text: "4615 Avenue H" }
   ];
 
   return (
@@ -81,7 +81,7 @@ const HeroSection = () => {
             <Button
               variant="outline"
               className="bg-white/10 backdrop-blur-sm border-white/30 text-white hover:bg-white/20 text-lg px-8 py-6 rounded-md animate-fade-in-delay-3"
-              onClick={() => window.open("tel:+11234567890")}
+              onClick={() => window.open("tel:+12812329961")}
             >
               Make a Reservation
             </Button>

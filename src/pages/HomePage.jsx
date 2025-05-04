@@ -68,9 +68,9 @@ const HomePage = () => {
   };
 
   const businessHours = [
-    { day: "Monday - Thursday", hours: "11:00 AM - 9:00 PM" },
-    { day: "Friday - Saturday", hours: "11:00 AM - 10:00 PM" },
-    { day: "Sunday", hours: "12:00 PM - 8:00 PM" }
+    { day: "Monday", hours: "8:00 AM - 9:00 PM" },
+    { day: "Tuesday", hours: "Closed" },
+    { day: "Wednesday - Sunday", hours: "8:00 AM - 9:00 PM" }
   ];
 
   const renderRatingStars = (rating) => {
@@ -228,7 +228,7 @@ const HomePage = () => {
               <div className="h-64 md:h-80 rounded-lg overflow-hidden shadow-lg mb-4">
                 {/* Replace with actual Google Maps embed */}
                 <iframe 
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3467.7655685831847!2d-95.5968!3d29.6256!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjnCsDM3JzMyLjIiTiA5NcKwMzUnNDguNSJX!5e0!3m2!1sen!2sus!4v1615824458367!5m2!1sen!2sus" 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1776772.5969610233!2d-98.21990744374999!3d29.567067199999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x86411c288cbee307%3A0x2060911b02f9753f!2sRita&#39;s%20Mexican%20Restaurant!5e0!3m2!1sen!2sus!4v1744172139865!5m2!1sen!2sus" 
                   width="100%" 
                   height="100%" 
                   style={{ border: 0 }} 
@@ -239,12 +239,12 @@ const HomePage = () => {
               </div>
               <div className="flex items-center mb-3">
                 <MapPin className="mr-2" size={20} />
-                <p>123 Main Street, Suite 101, Your City, State 12345</p>
+                <p>4615 Avenue H, Rosenberg, TX 77471</p>
               </div>
               <div className="flex items-center">
                 <Phone className="mr-2" size={20} />
-                <a href="tel:1234567890" className="underline hover:opacity-80">
-                  (123) 456-7890
+                <a href="tel:2812329961" className="underline hover:opacity-80">
+                  (281) 232-9961
                 </a>
               </div>
             </div>

@@ -69,8 +69,8 @@ const NavBar = () => {
         {/* Logo */}
         <Link to={isAdminRoute ? "/admin/dashboard" : "/"} className="flex items-center h-full">
           <img
-            src="bistro_bytes_final_transparent.png"
-            alt="Bistro Logo"
+            src="ritas-logo.png"
+            alt="Ritas Mexican Restaurant Logo"
             className={`transition-all duration-300 rounded-2xl object-contain
       ${isShrunk ? "h-14" : "h-full max-h-[120px] py-1"}`}
           />
