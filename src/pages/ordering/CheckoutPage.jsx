@@ -115,6 +115,7 @@ const CheckoutPage = () => {
       items,
       customerEmail: userInfo.email,
       customerName: userInfo.name,
+      customerPhone: userInfo.phone, // Add this line to include phone in the order
       specialNotes: userInfo.notes,
     };
 

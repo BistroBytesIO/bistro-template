@@ -58,6 +58,23 @@ const SplitPaymentForm = () => {
   const [isConfirming, setIsConfirming] = useState(false);
 
   const [hasCreatedIntent, setHasCreatedIntent] = useState(false);
+  const [orderDetails, setOrderDetails] = useState(null);
+
+  // Add a function to fetch order details when the component loads
+  useEffect(() => {
+    const fetchOrderDetails = async () => {
+      if (!orderId) return;
+      
+      try {
+        const response = await api.get(`/orders/${orderId}`);
+        setOrderDetails(response.data.order);
+      } catch (error) {
+        console.error("Error fetching order details:", error);
+      }
+    };
+    
+    fetchOrderDetails();
+  }, [orderId]);
 
   useEffect(() => {
     const fetchPaymentIntent = async () => {
@@ -89,27 +106,37 @@ const SplitPaymentForm = () => {
   const handleConfirmPayment = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
-
+  
     try {
       setIsConfirming(true);
       setError("");
-
+  
       const { paymentIntent, error: stripeError } =
         await stripe.confirmCardPayment(clientSecret, {
           payment_method: {
             card: elements.getElement(CardNumberElement),
           },
         });
-
+  
       if (stripeError) {
         setError(stripeError.message || "Payment failed");
         setIsConfirming(false);
         return;
       }
-
+  
       if (paymentIntent && paymentIntent.status === "succeeded") {
         try {
-          await api.post(`/orders/${orderId}/confirmPayment/stripe`);
+          // Ensure we're sending all available customer data
+          const customerData = orderDetails ? {
+            name: orderDetails.customerName,
+            email: orderDetails.customerEmail,
+            phone: orderDetails.customerPhone || ""
+          } : null;
+          
+          // Log to confirm what we're sending
+          console.log("Sending customer data with payment confirmation:", customerData);
+          
+          await api.post(`/orders/${orderId}/confirmPayment/stripe`, customerData);
           navigate(`/payment-success?orderId=${orderId}`);
         } catch (confirmError) {
           console.error("Error confirming payment:", confirmError);
