@@ -86,7 +86,7 @@ const HomePage = () => {
     <div className="bg-background w-full min-h-screen">
       <HeroSection />
 
-      {/* Featured Items Carousel */}
+      {/* Featured Items Carousel - More subtle CTA */}
       <section className="py-16 px-4 bg-gradient-to-b from-secondary/50 to-background">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold mb-8 text-center text-foreground relative">
@@ -139,13 +139,14 @@ const HomePage = () => {
                         <div className="flex items-center mb-6">
                           <span className="text-3xl font-bold text-primary mr-2">${item.price.toFixed(2)}</span>
                         </div>
-                        <Button
+                        {/* More subtle CTA - only on featured items */}
+                        <button
                           onClick={() => navigate("/menu")}
-                          className="group bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary transition-all duration-300"
+                          className="group text-primary hover:text-primary-foreground hover:bg-primary transition-all duration-300 border border-primary hover:border-primary rounded-md px-6 py-3 font-medium"
                         >
-                          Order Now
-                          <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                        </Button>
+                          View Full Menu
+                          <ArrowRight className="ml-2 h-4 w-4 transform group-hover:translate-x-1 transition-transform inline" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -170,7 +171,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* About Section with Parallax */}
+      {/* About Section with Parallax - Removed ordering CTA */}
       <section className="py-20 px-4 bg-fixed bg-center bg-cover" style={{ backgroundImage: "url('/restaurant-bg.jpg')" }}>
         <div className="max-w-7xl mx-auto">
           <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-8 md:p-12">
@@ -187,12 +188,7 @@ const HomePage = () => {
                   From our cozy dining area to our friendly staff,
                   everything we do is designed to make you feel right at home.
                 </p>
-                <Button
-                  onClick={() => navigate("/menu")}
-                  className="bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary"
-                >
-                  Explore Our Menu
-                </Button>
+                {/* Removed the "Explore Our Menu" button to be less pushy */}
               </div>
               
               <div className="md:w-1/2">
@@ -217,7 +213,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Enhanced Contact Section */}
+      {/* Enhanced Contact Section - Single, natural CTA */}
       <section className="bg-primary text-primary-foreground py-16 px-4">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold mb-8 text-center">Visit Us Today</h2>
@@ -267,18 +263,19 @@ const HomePage = () => {
               </div>
               
               <div className="bg-white/10 rounded-lg p-6 backdrop-blur-sm">
-                <h3 className="text-xl font-semibold mb-4">Ready to Order?</h3>
-                <p className="mb-6">Experience our delicious menu from the comfort of your home.</p>
+                <h3 className="text-xl font-semibold mb-4">Come Dine With Us</h3>
+                <p className="mb-6">We'd love to serve you our delicious, handcrafted meals in our cozy dining room.</p>
                 <div className="flex flex-col space-y-3">
+                  {/* Single, natural CTA for ordering */}
                   <Button 
                     onClick={() => navigate("/menu")}
                     className="bg-white text-primary hover:bg-secondary hover:text-primary w-full"
                   >
-                    Order Online
+                    Browse Our Menu
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="bg-white text-primary hover:bg-secondary hover:text-primary w-full"
+                    className="bg-transparent border-white text-white hover:bg-white hover:text-primary w-full"
                   >
                     Make a Reservation
                     <ExternalLink className="ml-2" size={16} />

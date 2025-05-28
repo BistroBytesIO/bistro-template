@@ -1,61 +1,173 @@
 import React, { useEffect, useState } from "react";
 import adminApi from "../../services/adminApi";
+import useWebSocket from "../../hooks/useWebSocket";
+import soundService from "../../services/soundService";
 import ClipLoader from "react-spinners/ClipLoader";
-import { Clock, Check, AlertCircle } from "lucide-react";
+import toast from "react-hot-toast";
+import { Clock, Check, AlertCircle, Wifi, WifiOff, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import "./AdminOrders.css";
 
 function AdminOrders() {
   const [orders, setOrders] = useState([]);
-  const [loadingOrderId, setLoadingOrderId] = useState(null); // Track loading state for specific orders
+  const [loadingOrderId, setLoadingOrderId] = useState(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // WebSocket configuration
+  const baseUrl = import.meta.env.VITE_BASE_API_URL || 'http://localhost:8080/api';
+  console.log('🔧 Admin Orders - Base URL:', baseUrl);
+  
+  const handleWebSocketMessage = (notification) => {
+    console.log('📥 AdminOrders received WebSocket notification:', notification);
+    
+    // Play sound for new orders
+    if (notification.notificationType === 'NEW_ORDER' && soundEnabled) {
+      console.log('🔊 Playing cha-ching sound...');
+      soundService.playChaChing();
+      
+      // Show toast notification
+      toast.success(
+        `New Order #${notification.orderId} from ${notification.customerName}`,
+        {
+          duration: 6000,
+          icon: '🔔',
+          style: {
+            background: '#10B981',
+            color: 'white',
+          },
+        }
+      );
+    }
+    
+    // Refresh orders list
+    console.log('🔄 Refreshing orders list...');
+    fetchOrders();
+  };
+
+  const { isConnected, connectionError } = useWebSocket(
+    baseUrl,
+    handleWebSocketMessage,
+    true // enabled
+  );
 
   useEffect(() => {
+    console.log('🚀 AdminOrders component mounted');
     fetchOrders();
   }, []);
 
+  // Update sound service when sound preference changes
+  useEffect(() => {
+    soundService.setEnabled(soundEnabled);
+    console.log('🔊 Sound notifications:', soundEnabled ? 'enabled' : 'disabled');
+  }, [soundEnabled]);
+
   const fetchOrders = async () => {
+    console.log('📊 Fetching orders...');
     try {
       const response = await adminApi.get("/admin/orders/pending");
-      console.log("Fetched orders:", response.data);
+      console.log("✅ Fetched orders:", response.data);
       if (Array.isArray(response.data)) {
         setOrders(response.data);
       } else {
         setOrders([]);
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      console.error("❌ Error fetching orders:", error);
       setOrders([]);
+      toast.error("Failed to fetch orders");
     }
   };
 
   const markAsReady = async (orderId) => {
-    setLoadingOrderId(orderId); // Set loading state for the clicked order
+    setLoadingOrderId(orderId);
     try {
+      console.log(`📝 Marking order ${orderId} as ready...`);
       await adminApi.put(`/admin/orders/${orderId}/ready`);
       fetchOrders();
+      toast.success(`Order #${orderId} marked as ready!`);
     } catch (error) {
       console.error("Error marking order as ready:", error);
+      toast.error("Failed to update order status");
     } finally {
-      setLoadingOrderId(null); // Remove loading state
+      setLoadingOrderId(null);
     }
+  };
+
+  const toggleSound = () => {
+    setSoundEnabled(!soundEnabled);
+    if (!soundEnabled) {
+      // Test sound when enabling
+      console.log('🎵 Testing sound...');
+      soundService.playChaChing();
+    }
+    toast.success(`Sound notifications ${!soundEnabled ? 'enabled' : 'disabled'}`);
   };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Pending Orders ({orders.length})
-        </h2>
-        <Button
-          onClick={fetchOrders}
-          variant="outline"
-          size="sm"
-          className="text-gray-600 border-gray-300"
-        >
-          Refresh
-        </Button>
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Pending Orders ({orders.length})
+          </h2>
+          
+          {/* WebSocket Connection Status */}
+          <div className="flex items-center gap-2">
+            {isConnected ? (
+              <div className="flex items-center text-green-600">
+                <Wifi size={16} />
+                <span className="text-sm font-medium">Live</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-red-600">
+                <WifiOff size={16} />
+                <span className="text-sm font-medium">Offline</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Sound Toggle Button */}
+          <Button
+            onClick={toggleSound}
+            variant={soundEnabled ? "default" : "outline"}
+            size="sm"
+            className={`flex items-center gap-2 ${
+              soundEnabled 
+                ? "bg-green-600 hover:bg-green-700 text-white" 
+                : "text-gray-600 border-gray-300"
+            }`}
+          >
+            {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            {soundEnabled ? "Sound On" : "Sound Off"}
+          </Button>
+
+          <Button
+            onClick={fetchOrders}
+            variant="outline"
+            size="sm"
+            className="text-gray-600 border-gray-300"
+          >
+            Refresh
+          </Button>
+        </div>
       </div>
 
+      {/* Connection Error Alert */}
+      {connectionError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <AlertCircle className="text-red-600 mr-2" size={20} />
+            <div>
+              <p className="text-red-800 text-sm font-medium">WebSocket Connection Failed</p>
+              <p className="text-red-700 text-xs">{connectionError}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Orders Display */}
       {orders.length > 0 ? (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           {orders.map((order) => (

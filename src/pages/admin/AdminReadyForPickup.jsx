@@ -1,40 +1,74 @@
-// Enhanced AdminReadyForPickup.jsx
 import React, { useEffect, useState } from "react";
 import adminApi from "../../services/adminApi";
+import useWebSocket from "../../hooks/useWebSocket";
 import ClipLoader from "react-spinners/ClipLoader";
-import { Clock, CheckCircle, AlertCircle, ShoppingBag } from "lucide-react";
+import toast from "react-hot-toast";
+import { Clock, CheckCircle, AlertCircle, ShoppingBag, Wifi, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function AdminReadyForPickup() {
   const [orders, setOrders] = useState([]);
   const [loadingOrderId, setLoadingOrderId] = useState(null);
 
+  // WebSocket configuration
+  const baseUrl = import.meta.env.VITE_BASE_API_URL || 'http://localhost:8080/api';
+  console.log('🔧 Admin Ready for Pickup - Base URL:', baseUrl);
+  
+  const handleWebSocketMessage = (notification) => {
+    console.log('📥 AdminReadyForPickup received WebSocket notification:', notification);
+    
+    // Refresh orders list when there are updates
+    if (notification.notificationType === 'ORDER_STATUS_UPDATE' || notification.notificationType === 'NEW_ORDER') {
+      fetchOrders();
+      
+      // Show toast for status updates
+      if (notification.message && notification.message.includes('READY_FOR_PICKUP')) {
+        toast.success(`Order #${notification.orderId} is ready for pickup!`, {
+          icon: '✅',
+          duration: 4000,
+        });
+      }
+    }
+  };
+
+  const { isConnected, connectionError } = useWebSocket(
+    baseUrl,
+    handleWebSocketMessage,
+    true // enabled
+  );
+
   useEffect(() => {
+    console.log('🚀 AdminReadyForPickup component mounted');
     fetchOrders();
   }, []);
 
   const fetchOrders = async () => {
+    console.log('📊 Fetching ready for pickup orders...');
     try {
       const response = await adminApi.get("/admin/orders/readyForPickup");
-      console.log("Fetched READY orders:", response.data);
+      console.log("✅ Fetched READY orders:", response.data);
       if (Array.isArray(response.data)) {
         setOrders(response.data);
       } else {
         setOrders([]);
       }
     } catch (error) {
-      console.error("Error fetching 'ready_for_pickup' orders:", error);
+      console.error("❌ Error fetching 'ready_for_pickup' orders:", error);
       setOrders([]);
+      toast.error("Failed to fetch ready for pickup orders");
     }
   };
 
   const markAsPickedUp = async (orderId) => {
     setLoadingOrderId(orderId);
     try {
+      console.log(`📝 Marking order ${orderId} as picked up...`);
       await adminApi.put(`/admin/orders/${orderId}/completed`);
       fetchOrders();
+      toast.success(`Order #${orderId} marked as picked up!`);
     } catch (error) {
       console.error("Error marking order as picked up:", error);
+      toast.error("Failed to update order status");
     } finally {
       setLoadingOrderId(null);
     }
@@ -43,9 +77,27 @@ function AdminReadyForPickup() {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Ready For Pickup ({orders.length})
-        </h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold text-gray-800">
+            Ready For Pickup ({orders.length})
+          </h2>
+          
+          {/* WebSocket Connection Status */}
+          <div className="flex items-center gap-2">
+            {isConnected ? (
+              <div className="flex items-center text-green-600">
+                <Wifi size={16} />
+                <span className="text-sm font-medium">Live</span>
+              </div>
+            ) : (
+              <div className="flex items-center text-red-600">
+                <WifiOff size={16} />
+                <span className="text-sm font-medium">Offline</span>
+              </div>
+            )}
+          </div>
+        </div>
+
         <Button
           onClick={fetchOrders}
           variant="outline"
@@ -55,6 +107,19 @@ function AdminReadyForPickup() {
           Refresh
         </Button>
       </div>
+
+      {/* Connection Error Alert */}
+      {connectionError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center">
+            <AlertCircle className="text-red-600 mr-2" size={20} />
+            <div>
+              <p className="text-red-800 text-sm font-medium">WebSocket Connection Failed</p>
+              <p className="text-red-700 text-xs">{connectionError}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {orders.length > 0 ? (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">

@@ -7,7 +7,7 @@ import { ThemeProvider } from "./context/ThemeContext.jsx";
 import "./index.css";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  // <StrictMode>
     <MiniCartProvider>
       <ThemeProvider>
         <CartProvider>
@@ -15,5 +15,5 @@ createRoot(document.getElementById("root")).render(
         </CartProvider>
       </ThemeProvider>
     </MiniCartProvider>
-  </StrictMode>
+  // </StrictMode>
 );
