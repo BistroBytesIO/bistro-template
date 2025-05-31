@@ -8,6 +8,7 @@ import PaymentMethodSelection from "./pages/payments/PaymentMethodSelection";
 import StripePaymentPage from "./pages/payments/StripePaymentPage";
 import PayPalPaymentPage from "./pages/payments/PayPalPaymentPage";
 import ApplePayPaymentPage from "./pages/payments/ApplePayPaymentPage";
+import GooglePayPaymentPage from "./pages/payments/GooglePayPaymentPage";
 import PaymentSuccessPage from "./pages/payments/PaymentSuccessPage";
 import { Toaster } from "react-hot-toast";
 import AppLayout from "./layout/AppLayout";
@@ -37,6 +38,7 @@ function AppRoutes() {
             <Route path="/payment/stripe" element={<StripePaymentPage />} />
             <Route path="/payment/paypal" element={<PayPalPaymentPage />} />
             <Route path="/payment/applepay" element={<ApplePayPaymentPage />} />
+            <Route path="/payment/googlepay" element={<GooglePayPaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route
