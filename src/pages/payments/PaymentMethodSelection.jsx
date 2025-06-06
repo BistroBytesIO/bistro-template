@@ -1,76 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { CreditCard, Smartphone, Apple, Wallet } from "lucide-react";
+import { CreditCard, Smartphone, Apple, Wallet, Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { usePaymentMethods } from "../../hooks/usePaymentMethods";
 
 const PaymentMethodSelection = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const orderId = params.get("orderId");
-
-  const [deviceInfo, setDeviceInfo] = useState({
-    isIOS: false,
-    isAndroid: false,
-    isMobile: false,
-    supportsApplePay: false,
-    supportsGooglePay: false
-  });
-
-  useEffect(() => {
-    // Detect device and payment method support
-    const detectDevice = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-      const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
-      const isAndroid = /android/i.test(userAgent);
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
-
-      // Check for Apple Pay support
-      let supportsApplePay = false;
-      if (window.ApplePaySession && ApplePaySession.canMakePayments) {
-        supportsApplePay = ApplePaySession.canMakePayments();
-      }
-
-      // Check for Google Pay support
-      let supportsGooglePay = false;
-      if (window.google && window.google.payments && window.google.payments.api) {
-        supportsGooglePay = true;
-      }
-
-      setDeviceInfo({
-        isIOS,
-        isAndroid,
-        isMobile,
-        supportsApplePay,
-        supportsGooglePay
-      });
-    };
-
-    detectDevice();
-  }, []);
+  
+  const {
+    isLoading,
+    error,
+    availableMethods,
+    deviceInfo,
+    hasApplePay,
+    hasGooglePay,
+    hasMobilePayments,
+    isMobile,
+    getRecommendedMethod
+  } = usePaymentMethods();
 
   if (!orderId) {
     return (
       <div className="bg-background min-h-screen flex items-center justify-center p-4">
         <div className="max-w-lg w-full bg-secondary p-6 rounded shadow">
-          <p className="text-lg text-gray-700">
+          <div className="flex items-center gap-2 text-red-600 mb-4">
+            <AlertCircle size={20} />
+            <p className="text-lg font-semibold">Order Not Found</p>
+          </div>
+          <p className="text-gray-700 mb-4">
             No order ID found. Please place an order first.
           </p>
+          <Button 
+            onClick={() => navigate('/menu')}
+            className="w-full bg-primary text-white"
+          >
+            Browse Menu
+          </Button>
         </div>
       </div>
     );
   }
 
-  const handleStripe = () => {
-    navigate(`/payment/stripe?orderId=${orderId}`);
+  const handlePaymentMethod = (methodId) => {
+    switch (methodId) {
+      case 'apple_pay':
+        navigate(`/payment/applepay?orderId=${orderId}`);
+        break;
+      case 'google_pay':
+        navigate(`/payment/googlepay?orderId=${orderId}`);
+        break;
+      case 'card':
+      default:
+        navigate(`/payment/stripe?orderId=${orderId}`);
+        break;
+    }
   };
 
-  const handleApplePay = () => {
-    navigate(`/payment/applepay?orderId=${orderId}`);
-  };
-
-  const handleGooglePay = () => {
-    navigate(`/payment/googlepay?orderId=${orderId}`);
+  const getIconComponent = (iconName) => {
+    const icons = {
+      Apple: Apple,
+      Wallet: Wallet,
+      CreditCard: CreditCard
+    };
+    const IconComponent = icons[iconName] || CreditCard;
+    return <IconComponent size={20} />;
   };
 
   return (
@@ -81,51 +77,106 @@ const PaymentMethodSelection = () => {
         </h2>
         <p className="mb-6 text-gray-700">Order ID: {orderId}</p>
 
-        <div className="space-y-3">
-          {/* Apple Pay - Show only on iOS devices or if Apple Pay is supported */}
-          {(deviceInfo.isIOS || deviceInfo.supportsApplePay) && (
-            <Button
-              onClick={handleApplePay}
-              className="w-full bg-black text-white hover:bg-gray-800 flex items-center justify-center gap-3 py-4"
-            >
-              <Apple size={20} />
-              <span className="font-medium">Pay with Apple Pay</span>
-            </Button>
-          )}
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <Loader2 className="animate-spin mx-auto mb-4 text-primary" size={32} />
+            <p className="text-gray-600">Detecting available payment methods...</p>
+          </div>
+        )}
 
-          {/* Google Pay - Show only on Android devices or if Google Pay is supported */}
-          {(deviceInfo.isAndroid || deviceInfo.supportsGooglePay) && (
-            <Button
-              onClick={handleGooglePay}
-              className="w-full bg-white text-gray-800 border-2 border-gray-300 hover:bg-gray-50 flex items-center justify-center gap-3 py-4"
-            >
-              <Wallet size={20} className="text-blue-500" />
-              <span className="font-medium">Pay with Google Pay</span>
-            </Button>
-          )}
-
-          {/* Credit Card Payment */}
-          <Button
-            onClick={handleStripe}
-            className="w-full bg-primary hover:bg-primary-foreground hover:text-primary text-white flex items-center justify-center gap-3 py-4"
-          >
-            <CreditCard size={20} />
-            <span className="font-medium">Pay with Card</span>
-          </Button>
-
-          {/* Mobile-specific message */}
-          {deviceInfo.isMobile && (
-            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-center gap-2 text-blue-800">
-                <Smartphone size={16} />
-                <p className="text-sm">
-                  {deviceInfo.isIOS && deviceInfo.supportsApplePay && "Apple Pay available for faster checkout"}
-                  {deviceInfo.isAndroid && deviceInfo.supportsGooglePay && "Google Pay available for faster checkout"}
-                  {!deviceInfo.supportsApplePay && !deviceInfo.supportsGooglePay && "Mobile payment options may be limited on this device"}
-                </p>
-              </div>
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center gap-2 text-red-800 mb-2">
+              <AlertCircle size={16} />
+              <p className="font-semibold">Detection Error</p>
             </div>
-          )}
+            <p className="text-red-700 text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Payment Methods */}
+        {!isLoading && (
+          <div className="space-y-3">
+            {availableMethods.map((method) => (
+              <div key={method.id} className="relative">
+                <Button
+                  onClick={() => handlePaymentMethod(method.id)}
+                  className={`w-full flex items-center justify-between gap-3 py-4 px-6 text-left ${
+                    method.id === 'apple_pay' 
+                      ? 'bg-black text-white hover:bg-gray-800' 
+                      : method.id === 'google_pay'
+                      ? 'bg-white text-gray-800 border-2 border-gray-300 hover:bg-gray-50'
+                      : 'bg-primary hover:bg-primary-foreground hover:text-primary text-white'
+                  }`}
+                  disabled={!method.available}
+                >
+                  <div className="flex items-center gap-3">
+                    {getIconComponent(method.icon)}
+                    <div>
+                      <div className="font-medium">{method.name}</div>
+                      <div className={`text-sm ${
+                        method.id === 'google_pay' ? 'text-gray-600' : 'opacity-80'
+                      }`}>
+                        {method.description}
+                      </div>
+                    </div>
+                  </div>
+                  {method.recommended && (
+                    <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                      Recommended
+                    </div>
+                  )}
+                </Button>
+                
+                {method.requiresSetup && (
+                  <div className="mt-1 px-3 text-xs text-amber-600">
+                    ⚠️ Setup required in Wallet app
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Device Information */}
+        {!isLoading && isMobile && (
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-800 mb-2">
+              <Smartphone size={16} />
+              <p className="font-semibold">Mobile Device Detected</p>
+            </div>
+            <div className="text-sm text-blue-700">
+              {hasMobilePayments ? (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle size={12} />
+                    <span>Fast mobile payments available</span>
+                  </div>
+                  {hasApplePay && (
+                    <div className="text-xs opacity-80">
+                      • Apple Pay: Touch ID or Face ID authentication
+                    </div>
+                  )}
+                  {hasGooglePay && (
+                    <div className="text-xs opacity-80">
+                      • Google Pay: Saved payment methods
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p>Mobile payment options may be limited on this device</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Security Notice */}
+        <div className="mt-6 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-xs text-gray-600 text-center">
+            🔒 All payments are processed securely. Your payment information is never stored on our servers.
+          </p>
         </div>
       </div>
     </div>

@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+
+localhost+3-key.pem
+localhost+3.pem

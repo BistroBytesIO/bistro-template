@@ -1,6 +1,9 @@
-// Enhanced usePaymentMethods.js with better Google Pay detection
-import { useState, useEffect } from 'react';
+// utils/paymentDetection.js
+import { useEffect, useState } from "react";
 
+/**
+ * Utility functions for detecting payment method availability
+ */
 const PaymentDetection = {
     /**
      * Detect device type and capabilities
@@ -15,7 +18,6 @@ const PaymentDetection = {
         const isChrome = /chrome/i.test(userAgent);
         const isFirefox = /firefox/i.test(userAgent);
         const isEdge = /edg/i.test(userAgent);
-        const isHTTPS = location.protocol === 'https:' || location.hostname === 'localhost';
 
         return {
             isIOS,
@@ -25,7 +27,6 @@ const PaymentDetection = {
             isChrome,
             isFirefox,
             isEdge,
-            isHTTPS,
             userAgent
         };
     },
@@ -62,79 +63,23 @@ const PaymentDetection = {
     },
 
     /**
-     * Enhanced Google Pay detection for HTTPS environments
+     * Check Google Pay availability using Payment Request API
      */
     checkGooglePaySupport: async () => {
         try {
-            // Check if we're on HTTPS (required for Google Pay)
-            if (location.protocol !== 'https:' && !location.hostname.includes('localhost')) {
-                return { supported: false, reason: 'Google Pay requires HTTPS connection' };
-            }
-
             // Check if PaymentRequest is available
             if (!window.PaymentRequest) {
                 return { supported: false, reason: 'PaymentRequest API not available' };
             }
 
-            // Test Google Pay availability with proper configuration
-            const googlePayConfig = {
-                environment: 'TEST', // 'PRODUCTION' for live
-                apiVersion: 2,
-                apiVersionMinor: 0,
-                merchantInfo: {
-                    merchantName: 'Bistro Template',
-                    merchantId: 'bistro-template-payments'
-                },
-                allowedPaymentMethods: [{
-                    type: 'CARD',
-                    parameters: {
-                        allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-                        allowedCardNetworks: ['VISA', 'MASTERCARD', 'AMEX', 'DISCOVER']
-                    },
-                    tokenizationSpecification: {
-                        type: 'PAYMENT_GATEWAY',
-                        parameters: {
-                            gateway: 'stripe',
-                            'stripe:version': '2020-08-27',
-                            'stripe:publishableKey': import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-                        }
-                    }
-                }]
-            };
-
-            // Method 1: Try Google Pay API directly (if available)
-            if (window.google && window.google.payments && window.google.payments.api) {
-                try {
-                    const paymentsClient = new window.google.payments.api.PaymentsClient({
-                        environment: googlePayConfig.environment
-                    });
-
-                    const isReadyToPayRequest = {
-                        apiVersion: googlePayConfig.apiVersion,
-                        apiVersionMinor: googlePayConfig.apiVersionMinor,
-                        allowedPaymentMethods: googlePayConfig.allowedPaymentMethods
-                    };
-
-                    const response = await paymentsClient.isReadyToPay(isReadyToPayRequest);
-                    return {
-                        supported: response.result,
-                        reason: response.result ? 'Google Pay is ready' : 'Google Pay not ready'
-                    };
-                } catch (error) {
-                    console.log('Google Pay API check failed:', error);
-                    // Fall through to PaymentRequest method
-                }
-            }
-
-            // Method 2: Use PaymentRequest API
+            // Basic payment method for testing
             const supportedInstruments = [{
-                supportedMethods: 'https://google.com/pay',
-                data: googlePayConfig
+                supportedMethods: 'basic-card'
             }];
 
             const details = {
                 total: {
-                    label: 'Test Payment',
+                    label: 'Test',
                     amount: { currency: 'USD', value: '0.01' }
                 }
             };
@@ -145,19 +90,10 @@ const PaymentDetection = {
 
                 return {
                     supported: canMakePayment,
-                    reason: canMakePayment ? 'Google Pay is available via PaymentRequest' : 'Google Pay not available - check if signed into Google account and have payment methods saved'
+                    reason: canMakePayment ? 'Google Pay is available' : 'Google Pay not available'
                 };
             } catch (error) {
-                console.log('PaymentRequest Google Pay check failed:', error);
-
-                // Method 3: Basic device and browser check as fallback
-                const deviceInfo = PaymentDetection.getDeviceInfo();
-                const likelySupported = (deviceInfo.isAndroid || deviceInfo.isChrome) && deviceInfo.isHTTPS;
-
-                return {
-                    supported: likelySupported,
-                    reason: likelySupported ? 'Google Pay likely supported (please ensure you\'re signed into Google account)' : 'Google Pay not supported on this device/browser'
-                };
+                return { supported: false, reason: error.message };
             }
         } catch (error) {
             return { supported: false, reason: error.message };
@@ -170,23 +106,11 @@ const PaymentDetection = {
     getPaymentSupport: async () => {
         const deviceInfo = PaymentDetection.getDeviceInfo();
 
-        console.log('🔍 Device Detection:', {
-            isAndroid: deviceInfo.isAndroid,
-            isChrome: deviceInfo.isChrome,
-            isHTTPS: deviceInfo.isHTTPS,
-            userAgent: deviceInfo.userAgent
-        });
-
         // Run checks in parallel
         const [applePaySupport, googlePaySupport] = await Promise.all([
             PaymentDetection.checkApplePaySupport(),
             PaymentDetection.checkGooglePaySupport()
         ]);
-
-        console.log('💳 Payment Support Results:', {
-            applePay: applePaySupport,
-            googlePay: googlePaySupport
-        });
 
         return {
             deviceInfo,
@@ -240,34 +164,6 @@ const PaymentDetection = {
         });
 
         return recommendations.sort((a, b) => a.priority - b.priority);
-    },
-
-    /**
-     * Debug function to help troubleshoot payment detection
-     */
-    debugPaymentSupport: async () => {
-        console.group('🔧 Payment Method Debug Information');
-
-        const deviceInfo = PaymentDetection.getDeviceInfo();
-        console.log('Device Info:', deviceInfo);
-
-        console.log('Browser APIs Available:', {
-            PaymentRequest: !!window.PaymentRequest,
-            ApplePaySession: !!window.ApplePaySession,
-            GooglePayAPI: !!(window.google && window.google.payments && window.google.payments.api)
-        });
-
-        console.log('Environment:', {
-            protocol: location.protocol,
-            hostname: location.hostname,
-            isHTTPS: deviceInfo.isHTTPS
-        });
-
-        const support = await PaymentDetection.getPaymentSupport();
-        console.log('Payment Support Results:', support);
-
-        console.groupEnd();
-        return support;
     }
 };
 
@@ -287,11 +183,6 @@ export const usePaymentMethods = () => {
         const detectPaymentMethods = async () => {
             try {
                 setPaymentSupport(prev => ({ ...prev, isLoading: true, error: null }));
-
-                // Enable debug logging in development
-                if (import.meta.env.DEV) {
-                    await PaymentDetection.debugPaymentSupport();
-                }
 
                 const support = await PaymentDetection.getPaymentSupport();
 
@@ -340,7 +231,7 @@ export const usePaymentMethods = () => {
                     description: 'Pay with your credit or debit card',
                     priority: 99,
                     available: true,
-                    recommended: methods.length === 0, // Recommended if no mobile payments
+                    recommended: false,
                     requiresSetup: false
                 });
 
@@ -348,11 +239,8 @@ export const usePaymentMethods = () => {
                 methods.sort((a, b) => a.priority - b.priority);
                 setAvailableMethods(methods);
 
-                // Log results for debugging
-                console.log('🎯 Available Payment Methods:', methods);
-
             } catch (error) {
-                console.error('❌ Error detecting payment methods:', error);
+                console.error('Error detecting payment methods:', error);
                 setPaymentSupport(prev => ({
                     ...prev,
                     isLoading: false,
@@ -415,7 +303,6 @@ export const usePaymentMethods = () => {
         hasMobilePayments: paymentSupport.applePay.supported || paymentSupport.googlePay.supported,
         isMobile: paymentSupport.deviceInfo?.isMobile || false,
         isIOS: paymentSupport.deviceInfo?.isIOS || false,
-        isAndroid: paymentSupport.deviceInfo?.isAndroid || false,
-        isHTTPS: paymentSupport.deviceInfo?.isHTTPS || false
+        isAndroid: paymentSupport.deviceInfo?.isAndroid || false
     };
 };
