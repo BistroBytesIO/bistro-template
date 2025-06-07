@@ -17,11 +17,11 @@ export default defineConfig({
     include: ['sockjs-client']
   },
   server: {
-    https: {
-      key: fs.readFileSync('./localhost+3-key.pem'),
-      cert: fs.readFileSync('./localhost+3.pem'),
+    hmr: {
+      port: 5174, // Use a different port for HMR
     },
-    host: '0.0.0.0',
-    port: 5173,
-  },
+    allowedHosts: [
+      "darling-treefrog-settled.ngrok-free.app",
+    ]
+  }
 });

@@ -240,7 +240,7 @@ const ApplePayForm = () => {
                         style: {
                           paymentRequestButton: {
                             type: "buy",
-                            theme: "black",
+                            theme: "dark",
                             height: "48px",
                           },
                         },
