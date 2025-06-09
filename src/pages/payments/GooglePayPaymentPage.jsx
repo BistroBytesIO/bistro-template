@@ -33,26 +33,8 @@ const GooglePayForm = () => {
     const [paymentStatus, setPaymentStatus] = useState("idle");
     const [orderTotal, setOrderTotal] = useState(0);
     const [clientSecret, setClientSecret] = useState("");
-    const [isMobile, setIsMobile] = useState(false);
-    const [useNativeGooglePay, setUseNativeGooglePay] = useState(false);
     
     const buttonContainerRef = useRef(null);
-    const googlePayClient = useRef(null);
-
-    // Detect mobile device
-    useEffect(() => {
-        const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isAndroid = /Android/i.test(navigator.userAgent);
-        setIsMobile(mobile);
-        
-        // Use native Google Pay API on mobile Android devices
-        if (mobile && isAndroid) {
-            setUseNativeGooglePay(true);
-            console.log("📱 Mobile Android detected - using native Google Pay API");
-        } else {
-            console.log("🖥️ Desktop or non-Android - using Stripe PaymentRequest");
-        }
-    }, []);
 
     // Fetch order details
     useEffect(() => {
@@ -97,328 +79,188 @@ const GooglePayForm = () => {
         fetchOrderDetails();
     }, [orderId, subtotal]);
 
-    // Initialize payment
+    // Initialize Google Pay
     useEffect(() => {
         if (!orderTotal || orderTotal < 0.50) return;
 
-        if (useNativeGooglePay) {
-            initializeNativeGooglePay();
-        } else {
-            initializeStripeGooglePay();
-        }
-    }, [orderTotal, useNativeGooglePay]);
+        const initializeGooglePay = async () => {
+            try {
+                setIsLoading(true);
+                console.log(`🏁 Initializing Google Pay for order ${orderId} with total ${orderTotal.toFixed(2)}`);
 
-    // Initialize native Google Pay API
-    const initializeNativeGooglePay = async () => {
-        try {
-            setIsLoading(true);
-            console.log("🔧 Initializing native Google Pay API");
+                // Detect if we're on mobile
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                console.log(`📱 Device detection - Mobile: ${isMobile}, Android: ${isAndroid}`);
 
-            // Create payment intent
-            const res = await api.post(`/orders/${orderId}/pay/googlepay`, {
-                paymentMethod: "googlePay",
-                amount: orderTotal,
-                currency: "USD",
-                description: `Order #${orderId}`,
-            });
+                // Create payment intent with Stripe
+                const res = await api.post(`/orders/${orderId}/pay/googlepay`, {
+                    paymentMethod: "googlePay",
+                    amount: orderTotal,
+                    currency: "USD",
+                    description: `Order #${orderId}`,
+                });
 
-            const { clientSecret: secret } = res.data;
-            setClientSecret(secret);
+                const { clientSecret: secret } = res.data;
+                setClientSecret(secret);
+                console.log("✅ Google Pay PaymentIntent created successfully");
 
-            // Load Google Pay API
-            await loadGooglePayAPI();
-            
-            // Check if Google Pay is available
-            const isReadyToPay = await googlePayClient.current.isReadyToPay({
-                apiVersion: 2,
-                apiVersionMinor: 0,
-                allowedPaymentMethods: [{
-                    type: 'CARD',
-                    parameters: {
-                        allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-                        allowedCardNetworks: ['VISA', 'MASTERCARD', 'AMEX', 'DISCOVER']
+                const stripe = await stripePromise;
+
+                // Create payment request with mobile-specific settings
+                const requestOptions = {
+                    country: "US",
+                    currency: "usd",
+                    total: {
+                        label: `Bistro Order #${orderId}`,
+                        amount: Math.round(orderTotal * 100),
                     },
-                    tokenizationSpecification: {
-                        type: 'PAYMENT_GATEWAY',
-                        parameters: {
-                            gateway: 'stripe',
-                            'stripe:version': '2020-08-27',
-                            'stripe:publishableKey': import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-                        }
-                    }
-                }]
-            });
+                    requestPayerName: true,
+                    requestPayerEmail: true,
+                    requestPayerPhone: true,
+                    requestShipping: false,
+                };
 
-            if (isReadyToPay.result) {
-                setCanMakePayment(true);
-                console.log("✅ Native Google Pay is available!");
-            } else {
-                throw new Error("Google Pay is not available on this device");
-            }
-        } catch (err) {
-            console.error("❌ Native Google Pay initialization error:", err);
-            setError(err.message || "Failed to initialize Google Pay");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+                // On mobile, be more explicit about disabling other payment methods
+                if (isMobile) {
+                    // More aggressive Link disabling for mobile
+                    requestOptions.disableLink = true;
+                    requestOptions.allowRedirects = 'never';
+                    console.log("📱 Mobile detected - disabling Stripe Link and redirects");
+                } else {
+                    requestOptions.disableLink = true;
+                }
 
-    // Initialize Stripe Google Pay
-    const initializeStripeGooglePay = async () => {
-        try {
-            setIsLoading(true);
-            console.log(`🏁 Initializing Stripe Google Pay for order ${orderId}`);
+                const pr = stripe.paymentRequest(requestOptions);
 
-            // Create payment intent
-            const res = await api.post(`/orders/${orderId}/pay/googlepay`, {
-                paymentMethod: "googlePay",
-                amount: orderTotal,
-                currency: "USD",
-                description: `Order #${orderId}`,
-            });
-
-            const { clientSecret: secret } = res.data;
-            setClientSecret(secret);
-
-            const stripe = await stripePromise;
-
-            // Create payment request
-            const pr = stripe.paymentRequest({
-                country: "US",
-                currency: "usd",
-                total: {
-                    label: `Bistro Order #${orderId}`,
-                    amount: Math.round(orderTotal * 100),
-                },
-                requestPayerName: true,
-                requestPayerEmail: true,
-                requestPayerPhone: true,
-                requestShipping: false,
-                disableLink: true,
-                allowRedirects: 'never',
-            });
-
-            const canMake = await pr.canMakePayment();
+                console.log("🔍 Checking Google Pay availability...");
                 
-            if (canMake) {
-                setCanMakePayment(true);
-                setPaymentRequest(pr);
-                console.log("✅ Stripe Google Pay is available!");
-
-                // Handle payment method event
-                pr.on("paymentmethod", handleStripePayment);
-            } else {
-                throw new Error("Google Pay is not available on this device or browser");
-            }
-        } catch (err) {
-            console.error("❌ Stripe Google Pay initialization error:", err);
-            setError(err.message || "Failed to initialize Google Pay");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Load Google Pay API
-    const loadGooglePayAPI = () => {
-        return new Promise((resolve, reject) => {
-            if (window.google && window.google.payments) {
-                googlePayClient.current = new window.google.payments.api.PaymentsClient({
-                    environment: 'TEST' // Change to 'PRODUCTION' for live
-                });
-                resolve();
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.src = 'https://pay.google.com/gp/p/js/pay.js';
-            script.onload = () => {
-                googlePayClient.current = new window.google.payments.api.PaymentsClient({
-                    environment: 'TEST' // Change to 'PRODUCTION' for live
-                });
-                resolve();
-            };
-            script.onerror = reject;
-            document.head.appendChild(script);
-        });
-    };
-
-    // Handle native Google Pay button click
-    const handleNativeGooglePay = async () => {
-        if (!googlePayClient.current) return;
-
-        try {
-            setPaymentStatus("processing");
-            console.log("🔄 Starting native Google Pay flow");
-
-            const paymentDataRequest = {
-                apiVersion: 2,
-                apiVersionMinor: 0,
-                allowedPaymentMethods: [{
-                    type: 'CARD',
-                    parameters: {
-                        allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-                        allowedCardNetworks: ['VISA', 'MASTERCARD', 'AMEX', 'DISCOVER']
-                    },
-                    tokenizationSpecification: {
-                        type: 'PAYMENT_GATEWAY',
-                        parameters: {
-                            gateway: 'stripe',
-                            'stripe:version': '2020-08-27',
-                            'stripe:publishableKey': import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-                        }
-                    }
-                }],
-                merchantInfo: {
-                    merchantId: 'bistro-template-payments',
-                    merchantName: 'Bistro Template'
-                },
-                transactionInfo: {
-                    totalPriceStatus: 'FINAL',
-                    totalPrice: orderTotal.toString(),
-                    currencyCode: 'USD'
-                }
-            };
-
-            const paymentData = await googlePayClient.current.loadPaymentData(paymentDataRequest);
-            console.log("✅ Google Pay data received");
-
-            // Process payment with Stripe
-            await processNativeGooglePayPayment(paymentData);
-
-        } catch (err) {
-            console.error("❌ Native Google Pay error:", err);
-            setPaymentStatus("error");
-            if (err.statusCode === 'CANCELED') {
-                setError("Payment was cancelled");
-            } else {
-                setError("Payment failed. Please try again.");
-            }
-        }
-    };
-
-    // Process native Google Pay payment
-    const processNativeGooglePayPayment = async (paymentData) => {
-        try {
-            const stripe = await stripePromise;
-            
-            // Confirm payment with Stripe
-            const { paymentIntent, error } = await stripe.confirmCardPayment(clientSecret, {
-                payment_method: {
-                    card: {
-                        token: paymentData.paymentMethodData.tokenizationData.token
-                    }
-                }
-            });
-
-            if (error) {
-                throw new Error(error.message);
-            }
-
-            if (paymentIntent.status === "succeeded") {
-                console.log("✅ Native Google Pay payment succeeded!");
+                // Check what payment methods are specifically available
+                const canMake = await pr.canMakePayment();
+                console.log("📱 Google Pay availability result:", canMake);
                 
-                await api.post(`/orders/${orderId}/confirmPayment/stripe`, {
-                    name: paymentData.paymentMethodData?.info?.billingAddress?.name,
-                    email: paymentData.email,
-                });
-
-                setPaymentStatus("success");
-                clearCart();
-
-                setTimeout(() => {
-                    navigate(`/payment-success?orderId=${orderId}`);
-                }, 1500);
-            } else {
-                throw new Error("Payment was not successful");
-            }
-        } catch (err) {
-            console.error("❌ Native Google Pay processing error:", err);
-            setPaymentStatus("error");
-            setError(err.message || "Payment processing failed");
-        }
-    };
-
-    // Handle Stripe payment
-    const handleStripePayment = async (ev) => {
-        console.log("💳 Stripe payment method selected:", ev.paymentMethod.type);
-        
-        // Check if this is Link instead of Google Pay
-        if (ev.paymentMethod.type === 'link') {
-            console.log("⚠️ Stripe Link detected - rejecting");
-            ev.complete("fail");
-            setError("Google Pay is required. Please ensure Google Pay is set up on your device.");
-            return;
-        }
-        
-        setPaymentStatus("processing");
-
-        try {
-            const stripe = await stripePromise;
-            const { paymentIntent, error } = await stripe.confirmCardPayment(
-                clientSecret,
-                { payment_method: ev.paymentMethod.id },
-                { handleActions: false }
-            );
-
-            if (error) {
-                ev.complete("fail");
-                setPaymentStatus("error");
-                setError(error.message || "Payment failed");
-                return;
-            }
-
-            if (paymentIntent.status === "requires_action") {
-                const { error: actionError } = await stripe.confirmCardPayment(clientSecret);
-                if (actionError) {
-                    ev.complete("fail");
-                    setPaymentStatus("error");
-                    setError(actionError.message || "Payment failed");
-                    return;
+                // Additional check for Google Pay specifically
+                if (canMake && canMake.googlePay === false && isMobile) {
+                    console.log("❌ Google Pay not available on mobile, trying alternative approach");
+                    throw new Error("Google Pay is not available on this mobile device. Please ensure you're signed into Google and have payment methods saved in Google Pay.");
                 }
+                
+                if (canMake) {
+                    setCanMakePayment(true);
+                    setPaymentRequest(pr);
+                    console.log("✅ Google Pay is available!");
+
+                    // Handle payment method event
+                    pr.on("paymentmethod", async (ev) => {
+                        console.log("💳 Payment method selected:", ev.paymentMethod.type);
+                        console.log("Full payment method details:", ev.paymentMethod);
+                        
+                        // Check if this is actually Google Pay and not Link
+                        if (ev.paymentMethod.type === 'link' && isMobile) {
+                            console.log("⚠️ Stripe Link detected instead of Google Pay - rejecting");
+                            ev.complete("fail");
+                            setError("Google Pay is required for mobile payments. Please ensure Google Pay is set up on your device.");
+                            return;
+                        }
+                        
+                        setPaymentStatus("processing");
+
+                        try {
+                            const { paymentIntent, error } = await stripe.confirmCardPayment(
+                                secret,
+                                {
+                                    payment_method: ev.paymentMethod.id
+                                },
+                                { handleActions: false }
+                            );
+
+                            if (error) {
+                                console.error("❌ Payment confirmation error:", error);
+                                ev.complete("fail");
+                                setPaymentStatus("error");
+                                setError(error.message || "Payment failed");
+                                return;
+                            }
+
+                            if (paymentIntent.status === "requires_action") {
+                                console.log("🔐 Payment requires additional authentication");
+                                const { error: actionError } = await stripe.confirmCardPayment(secret);
+                                if (actionError) {
+                                    ev.complete("fail");
+                                    setPaymentStatus("error");
+                                    setError(actionError.message || "Payment failed");
+                                    return;
+                                }
+                            }
+
+                            if (paymentIntent.status === "succeeded") {
+                                console.log("✅ Payment succeeded!");
+                                
+                                await api.post(`/orders/${orderId}/confirmPayment/stripe`, {
+                                    name: ev.paymentMethod?.billing_details?.name,
+                                    email: ev.paymentMethod?.billing_details?.email,
+                                    phone: ev.paymentMethod?.billing_details?.phone,
+                                });
+
+                                ev.complete("success");
+                                setPaymentStatus("success");
+                                clearCart();
+
+                                setTimeout(() => {
+                                    navigate(`/payment-success?orderId=${orderId}`);
+                                }, 1500);
+                            } else {
+                                ev.complete("fail");
+                                setPaymentStatus("error");
+                                setError("Payment was not successful");
+                            }
+                        } catch (err) {
+                            console.error("❌ Payment processing error:", err);
+                            ev.complete("fail");
+                            setPaymentStatus("error");
+                            setError("An error occurred while processing payment");
+                        }
+                    });
+                } else {
+                    throw new Error("Google Pay is not available on this device or browser. Make sure you're signed into your Google account and have payment methods saved.");
+                }
+            } catch (err) {
+                console.error("❌ Google Pay initialization error:", err);
+                setError(err.response?.data?.message || err.message || "Failed to initialize Google Pay");
+            } finally {
+                setIsLoading(false);
             }
+        };
 
-            if (paymentIntent.status === "succeeded") {
-                await api.post(`/orders/${orderId}/confirmPayment/stripe`, {
-                    name: ev.paymentMethod?.billing_details?.name,
-                    email: ev.paymentMethod?.billing_details?.email,
-                    phone: ev.paymentMethod?.billing_details?.phone,
-                });
+        initializeGooglePay();
+    }, [orderId, orderTotal, navigate, clearCart]);
 
-                ev.complete("success");
-                setPaymentStatus("success");
-                clearCart();
-
-                setTimeout(() => {
-                    navigate(`/payment-success?orderId=${orderId}`);
-                }, 1500);
-            } else {
-                ev.complete("fail");
-                setPaymentStatus("error");
-                setError("Payment was not successful");
-            }
-        } catch (err) {
-            console.error("❌ Stripe payment processing error:", err);
-            ev.complete("fail");
-            setPaymentStatus("error");
-            setError("An error occurred while processing payment");
-        }
-    };
-
-    // Force button styling for Stripe elements
+    // Force button styling after it renders
     useEffect(() => {
-        if (!useNativeGooglePay && canMakePayment && paymentRequest && buttonContainerRef.current) {
+        if (canMakePayment && paymentRequest && buttonContainerRef.current) {
+            // Wait a bit for the Stripe element to render
             const styleTimeout = setTimeout(() => {
                 const stripeElements = buttonContainerRef.current.querySelectorAll('.StripeElement, input, button, iframe');
                 
+                console.log("🎨 Found Stripe elements to style:", stripeElements.length);
+                
                 stripeElements.forEach((el, index) => {
+                    console.log(`Checking element ${index}:`, el.tagName, el.className, el.id);
+                    
+                    // Only style the main visible button element (usually the first div or the input)
+                    // Skip iframes and hidden elements
                     if (el.tagName === 'IFRAME' || 
                         el.style.display === 'none' || 
                         el.offsetWidth === 0 || 
                         el.offsetHeight === 0 ||
-                        index > 0) {
+                        index > 0) { // Only style the first element
+                        console.log(`Skipping element ${index} (${el.tagName})`);
                         return;
                     }
                     
+                    console.log(`Styling main button element ${index}:`, el.tagName);
+                    
+                    // Force the element to be visible and properly sized
                     el.style.cssText = `
                         height: 48px !important;
                         min-height: 48px !important;
@@ -443,11 +285,15 @@ const GooglePayForm = () => {
                         margin: 0 auto !important;
                     `;
                     
+                    // Remove problematic attributes
                     el.removeAttribute('aria-hidden');
                     el.setAttribute('aria-label', 'Pay with Google Pay');
+                    
+                    // Force a repaint
                     el.offsetHeight;
                 });
                 
+                // Apply additional styling to the container
                 if (buttonContainerRef.current) {
                     buttonContainerRef.current.style.cssText = `
                         width: 100% !important;
@@ -465,7 +311,7 @@ const GooglePayForm = () => {
 
             return () => clearTimeout(styleTimeout);
         }
-    }, [useNativeGooglePay, canMakePayment, paymentRequest]);
+    }, [canMakePayment, paymentRequest]);
 
     const handleBackToPaymentMethods = () => {
         navigate(`/payment-method?orderId=${orderId}`);
@@ -479,6 +325,52 @@ const GooglePayForm = () => {
 
     return (
         <div className="bg-background min-h-screen py-10 px-4">
+            {/* Add CSS to force hide Stripe Link and force Google Pay appearance */}
+            <style>{`
+                /* Hide Stripe Link elements */
+                .StripeElement iframe[src*="link"],
+                .StripeElement div[data-testid*="link"],
+                button[aria-label*="Link"],
+                button[aria-label*="link"],
+                div[class*="Link"],
+                div[class*="link"] {
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                    height: 0 !important;
+                    width: 0 !important;
+                }
+                
+                /* Force Google Pay styling */
+                .google-pay-button-container .StripeElement button,
+                .google-pay-button-container .StripeElement input,
+                .google-pay-button-container .StripeElement div[role="button"] {
+                    background: #000 !important;
+                    background-image: none !important;
+                    color: white !important;
+                }
+                
+                /* Hide any element containing "link" text */
+                .StripeElement *:not(script):not(style) {
+                    font-family: inherit !important;
+                }
+                
+                /* Force Google Pay text if Link appears */
+                .google-pay-button-container .StripeElement button::before,
+                .google-pay-button-container .StripeElement input::before,
+                .google-pay-button-container .StripeElement div[role="button"]::before {
+                    content: "Buy with G Pay" !important;
+                    position: absolute !important;
+                    top: 50% !important;
+                    left: 50% !important;
+                    transform: translate(-50%, -50%) !important;
+                    color: white !important;
+                    font-weight: bold !important;
+                    z-index: 1000 !important;
+                    pointer-events: none !important;
+                }
+            `}</style>
+            
             <div className="max-w-lg mx-auto">
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -499,9 +391,7 @@ const GooglePayForm = () => {
                     {isLoading && (
                         <div className="text-center py-8">
                             <Loader2 className="animate-spin mx-auto mb-4 text-primary" size={32} />
-                            <p className="text-gray-600">
-                                {useNativeGooglePay ? "Setting up native Google Pay..." : "Setting up Google Pay..."}
-                            </p>
+                            <p className="text-gray-600">Setting up Google Pay...</p>
                         </div>
                     )}
 
@@ -549,149 +439,105 @@ const GooglePayForm = () => {
                             <h3 className="text-lg font-semibold text-gray-800 mb-2">
                                 Processing Payment...
                             </h3>
-                            <p className="text-gray-600">
-                                {useNativeGooglePay 
-                                    ? "Complete the payment in Google Pay" 
-                                    : "Please complete the payment in the popup"
-                                }
-                            </p>
+                            <p className="text-gray-600">Please complete the payment in the Google Pay popup</p>
                         </div>
                     )}
 
-                    {/* Payment Buttons */}
-                    {!isLoading && !error && paymentStatus === "idle" && canMakePayment && (
-                        <div className="space-y-6">
-                            <div className="text-center mb-6">
-                                <p className="text-gray-600 mb-2">
-                                    Use your saved payment methods for quick checkout
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                    Amount: ${orderTotal.toFixed(2)}
-                                </p>
-                                {useNativeGooglePay && (
-                                    <p className="text-xs text-blue-600 mt-2">
-                                        Using native Google Pay for better mobile experience
-                                    </p>
-                                )}
-                            </div>
+                    {/* Google Pay Button */}
+                    {!isLoading && !error && paymentStatus === "idle" && (
+                        <>
+                            {canMakePayment && paymentRequest ? (
+                                <div className="space-y-4">
+                                    <div className="text-center mb-6">
+                                        <p className="text-gray-600 mb-2">
+                                            Use your saved payment methods for quick checkout
+                                        </p>
+                                        <p className="text-sm text-gray-500">
+                                            Amount: ${orderTotal.toFixed(2)}
+                                        </p>
+                                    </div>
 
-                            {/* Native Google Pay Button for Mobile */}
-                            {useNativeGooglePay && (
-                                <div className="flex justify-center">
-                                    <button
-                                        onClick={handleNativeGooglePay}
-                                        disabled={paymentStatus === "processing"}
-                                        className="native-google-pay-button"
-                                        style={{
-                                            width: '280px',
-                                            height: '48px',
-                                            background: 'linear-gradient(135deg, #4285f4 0%, #34a853 25%, #fbbc05 50%, #ea4335 75%)',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            color: 'white',
-                                            fontSize: '16px',
-                                            fontWeight: '500',
-                                            fontFamily: 'Roboto, Arial, sans-serif',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '8px',
-                                            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                                            transition: 'all 0.2s ease',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            e.target.style.transform = 'translateY(-1px)';
-                                            e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            e.target.style.transform = 'translateY(0)';
-                                            e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
-                                        }}
-                                    >
-                                        <Wallet size={20} />
-                                        Buy with Google Pay
-                                    </button>
-                                </div>
-                            )}
-
-                            {/* Stripe PaymentRequestButtonElement for Desktop */}
-                            {!useNativeGooglePay && paymentRequest && (
-                                <div className="flex justify-center">
-                                    <div 
-                                        ref={buttonContainerRef}
-                                        className="google-pay-button-container"
-                                        style={{
-                                            width: '100%',
-                                            maxWidth: '300px',
-                                            minHeight: '64px',
-                                            maxHeight: '64px',
-                                            display: 'flex',
-                                            justifyContent: 'center',
-                                            alignItems: 'center',
-                                            padding: '8px',
-                                            border: '1px dashed #ccc',
-                                            borderRadius: '8px',
-                                            backgroundColor: '#f8f9fa',
-                                            overflow: 'hidden',
-                                            position: 'relative'
-                                        }}
-                                    >
-                                        <PaymentRequestButtonElement
-                                            options={{
-                                                paymentRequest,
-                                                style: {
-                                                    paymentRequestButton: {
-                                                        type: "buy",
-                                                        theme: "dark",
-                                                        height: "48px",
+                                    {/* Stripe's PaymentRequestButtonElement */}
+                                    <div className="flex justify-center">
+                                        <div 
+                                            ref={buttonContainerRef}
+                                            className="google-pay-button-container"
+                                            style={{
+                                                width: '100%',
+                                                maxWidth: '300px',
+                                                minHeight: '64px',
+                                                maxHeight: '64px',
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                padding: '8px',
+                                                border: '1px dashed #ccc',
+                                                borderRadius: '8px',
+                                                backgroundColor: '#f8f9fa',
+                                                overflow: 'hidden',
+                                                position: 'relative'
+                                            }}
+                                        >
+                                            <PaymentRequestButtonElement
+                                                options={{
+                                                    paymentRequest,
+                                                    style: {
+                                                        paymentRequestButton: {
+                                                            type: "buy",
+                                                            theme: "dark",
+                                                            height: "48px",
+                                                        },
                                                     },
-                                                },
-                                            }}
-                                            onReady={(event) => {
-                                                console.log("✅ PaymentRequestButtonElement onReady fired");
-                                            }}
-                                            onClick={(event) => {
-                                                console.log("🖱️ PaymentRequestButtonElement clicked");
-                                            }}
-                                            onError={(error) => {
-                                                console.error("❌ PaymentRequestButtonElement error:", error);
-                                            }}
-                                        />
+                                                }}
+                                                onReady={(event) => {
+                                                    console.log("✅ PaymentRequestButtonElement onReady fired");
+                                                    console.log("Available payment methods:", event);
+                                                    
+                                                    // Log what payment methods are available
+                                                    if (event && event.availablePaymentMethods) {
+                                                        console.log("Available methods:", event.availablePaymentMethods);
+                                                    }
+                                                }}
+                                                onClick={(event) => {
+                                                    console.log("🖱️ PaymentRequestButtonElement clicked");
+                                                    console.log("Click event:", event);
+                                                }}
+                                                onError={(error) => {
+                                                    console.error("❌ PaymentRequestButtonElement error:", error);
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="text-center mt-6">
+                                        <Button
+                                            variant="outline"
+                                            onClick={handleBackToPaymentMethods}
+                                            className="text-gray-600 border-gray-300"
+                                        >
+                                            Use Different Payment Method
+                                        </Button>
                                     </div>
                                 </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <AlertCircle className="mx-auto mb-4 text-yellow-500" size={32} />
+                                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                        Google Pay Not Available
+                                    </h3>
+                                    <p className="text-gray-600 mb-6">
+                                        Google Pay is not available on this device or browser.
+                                        Make sure you have Google Pay set up and are using a supported browser.
+                                    </p>
+                                    <Button
+                                        onClick={handleBackToPaymentMethods}
+                                        className="bg-primary text-white hover:bg-primary-foreground hover:text-primary"
+                                    >
+                                        Choose Different Payment Method
+                                    </Button>
+                                </div>
                             )}
-
-                            <div className="text-center mt-6">
-                                <Button
-                                    variant="outline"
-                                    onClick={handleBackToPaymentMethods}
-                                    className="text-gray-600 border-gray-300"
-                                >
-                                    Use Different Payment Method
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Not Available State */}
-                    {!isLoading && !error && !canMakePayment && (
-                        <div className="text-center py-8">
-                            <AlertCircle className="mx-auto mb-4 text-yellow-500" size={32} />
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                                Google Pay Not Available
-                            </h3>
-                            <p className="text-gray-600 mb-6">
-                                Google Pay is not available on this device or browser.
-                                Make sure you have Google Pay set up and are using a supported browser.
-                            </p>
-                            <Button
-                                onClick={handleBackToPaymentMethods}
-                                className="bg-primary text-white hover:bg-primary-foreground hover:text-primary"
-                            >
-                                Choose Different Payment Method
-                            </Button>
-                        </div>
+                        </>
                     )}
                 </div>
 
@@ -702,8 +548,6 @@ const GooglePayForm = () => {
                         <p>Order Total: ${orderTotal}</p>
                         <p>Can Make Payment: {canMakePayment.toString()}</p>
                         <p>Payment Status: {paymentStatus}</p>
-                        <p>Is Mobile: {isMobile.toString()}</p>
-                        <p>Use Native Google Pay: {useNativeGooglePay.toString()}</p>
                         <p>Client Secret: {clientSecret ? "Set" : "Not Set"}</p>
                         <p>User Agent: {navigator.userAgent.substring(0, 80)}...</p>
                         <p>Platform: {navigator.platform}</p>
