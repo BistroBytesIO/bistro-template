@@ -73,7 +73,6 @@ const ExpressCheckoutForm = ({ orderId }) => {
     const [error, setError] = useState("");
     const [paymentStatus, setPaymentStatus] = useState("idle");
     const [orderDetails, setOrderDetails] = useState(null);
-    const [clientSecret, setClientSecret] = useState("");
 
     // Device detection for mobile-specific handling
     const [deviceInfo] = useState(() => {
@@ -87,14 +86,14 @@ const ExpressCheckoutForm = ({ orderId }) => {
         };
     });
 
-    // Fetch order details and create payment intent
+    // FIXED: Only fetch order details, don't create PaymentIntent yet
     useEffect(() => {
-        const initializePayment = async () => {
+        const fetchOrderDetails = async () => {
             try {
                 setIsLoading(true);
-                console.log('🚀 Initializing ExpressCheckout for order:', orderId);
+                console.log('🚀 Fetching order details for ExpressCheckout:', orderId);
 
-                // Fetch order details
+                // Only fetch order details
                 const orderResponse = await api.get(`/orders/${orderId}`);
                 const order = orderResponse.data.order;
                 setOrderDetails(order);
@@ -110,35 +109,25 @@ const ExpressCheckoutForm = ({ orderId }) => {
                     throw new Error(`Order amount ($${totalAmount.toFixed(2)}) is below minimum charge amount of $0.50`);
                 }
 
-                // Create payment intent for ExpressCheckout
-                const paymentResponse = await api.post(`/orders/${orderId}/pay/stripe`, {
-                    paymentMethod: "express_checkout",
-                    amount: totalAmount,
-                    currency: "USD",
-                    description: `Order #${orderId}`,
-                });
-
-                const { clientSecret: secret } = paymentResponse.data;
-                setClientSecret(secret);
-                console.log('✅ Payment intent created successfully');
+                console.log('✅ Order details loaded successfully');
 
             } catch (err) {
-                console.error('❌ Initialization error:', err);
-                setError(err.response?.data?.message || err.message || "Failed to initialize payment");
+                console.error('❌ Error fetching order details:', err);
+                setError(err.response?.data?.message || err.message || "Failed to load order details");
             } finally {
                 setIsLoading(false);
             }
         };
 
         if (orderId) {
-            initializePayment();
+            fetchOrderDetails();
         }
     }, [orderId]);
 
-    // Handle payment confirmation
+    // FIXED: Create PaymentIntent INSIDE the confirm event, not before
     const onConfirm = useCallback(async (event) => {
-        if (!stripe || !elements || !clientSecret) {
-            console.error('❌ Stripe not ready or missing client secret');
+        if (!stripe || !elements || !orderDetails) {
+            console.error('❌ Stripe not ready, elements missing, or order details not loaded');
             return;
         }
 
@@ -148,20 +137,34 @@ const ExpressCheckoutForm = ({ orderId }) => {
         setError("");
 
         try {
-            // Submit elements to validate
+            // FIXED: Submit elements first (this is required for ExpressCheckout)
             const { error: submitError } = await elements.submit();
             if (submitError) {
                 throw submitError;
             }
 
-            // Confirm payment with ExpressCheckoutElement
+            // FIXED: Create PaymentIntent AFTER elements.submit()
+            console.log('🔧 Creating PaymentIntent after elements submit');
+            const totalAmount = parseFloat(orderDetails.totalAmount);
+
+            const paymentResponse = await api.post(`/orders/${orderId}/pay/stripe`, {
+                paymentMethod: "express_checkout",
+                amount: totalAmount,
+                currency: "USD",
+                description: `Order #${orderId}`,
+            });
+
+            const { clientSecret } = paymentResponse.data;
+            console.log('✅ PaymentIntent created with clientSecret');
+
+            // FIXED: Now confirm the payment with the fresh clientSecret
             const { error: confirmError } = await stripe.confirmPayment({
                 elements,
                 clientSecret,
                 confirmParams: {
-                    return_url: `${window.location.origin}/payment-success?orderId=${orderId}`
+                    return_url: `${window.location.origin}/payment-success?orderId=${orderId}`,
                 },
-                redirect: 'if_required' // Prevents unnecessary redirects on mobile
+                redirect: 'if_required'
             });
 
             if (confirmError) {
@@ -190,7 +193,7 @@ const ExpressCheckoutForm = ({ orderId }) => {
             console.error('❌ Payment error:', err);
             handlePaymentError(err);
         }
-    }, [stripe, elements, clientSecret, orderId, orderDetails, navigate, clearCart]);
+    }, [stripe, elements, orderDetails, orderId, navigate, clearCart]);
 
     // Enhanced error handling for mobile payments
     const handlePaymentError = (error) => {
@@ -222,6 +225,8 @@ const ExpressCheckoutForm = ({ orderId }) => {
             userMessage = 'Authentication failed. Please try again or use a different payment method.';
         } else if (error.type === 'api_error') {
             userMessage = 'A technical error occurred. Please try again in a moment.';
+        } else if (error.code === 'payment_intent_unexpected_state') {
+            userMessage = 'Payment processing failed. Please refresh the page and try again.';
         } else if (error.message) {
             userMessage = error.message;
         }
@@ -239,6 +244,94 @@ const ExpressCheckoutForm = ({ orderId }) => {
         setError("");
         setPaymentStatus("idle");
         setIsProcessing(false);
+        // Refresh the page to reset ExpressCheckout state
+        window.location.reload();
+    };
+
+    const ApplePayDebug = () => {
+        const [applePayStatus, setApplePayStatus] = useState({
+            isSupported: false,
+            canMakePayments: false,
+            canMakePaymentsWithActiveCard: false,
+            error: null
+        });
+
+        useEffect(() => {
+            const checkApplePayStatus = () => {
+                try {
+                    console.log('🍎 Checking Apple Pay status...');
+
+                    // Check if ApplePaySession is available
+                    const isSupported = typeof window.ApplePaySession !== 'undefined';
+                    console.log('ApplePaySession available:', isSupported);
+
+                    if (!isSupported) {
+                        setApplePayStatus({
+                            isSupported: false,
+                            canMakePayments: false,
+                            canMakePaymentsWithActiveCard: false,
+                            error: 'ApplePaySession not available (not iOS/Safari or version too old)'
+                        });
+                        return;
+                    }
+
+                    // Check if device supports Apple Pay
+                    const canMakePayments = window.ApplePaySession.canMakePayments();
+                    console.log('Can make payments:', canMakePayments);
+
+                    // Check if device has active cards
+                    const canMakePaymentsWithActiveCard = window.ApplePaySession.canMakePaymentsWithActiveCard ?
+                        window.ApplePaySession.canMakePaymentsWithActiveCard('https://apple-pay-gateway-cert.apple.com/') :
+                        false;
+                    console.log('Can make payments with active card:', canMakePaymentsWithActiveCard);
+
+                    setApplePayStatus({
+                        isSupported,
+                        canMakePayments,
+                        canMakePaymentsWithActiveCard,
+                        error: null
+                    });
+
+                } catch (error) {
+                    console.error('❌ Apple Pay check error:', error);
+                    setApplePayStatus({
+                        isSupported: false,
+                        canMakePayments: false,
+                        canMakePaymentsWithActiveCard: false,
+                        error: error.message
+                    });
+                }
+            };
+
+            checkApplePayStatus();
+        }, []);
+
+        // Only show debug info in development
+        if (!import.meta.env.DEV) return null;
+
+        return (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-xs space-y-1">
+                <p><strong>🍎 Apple Pay Debug Info:</strong></p>
+                <p>iOS/Safari: {navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad') ? 'Yes' : 'No'}</p>
+                <p>HTTPS: {window.location.protocol === 'https:' ? 'Yes' : 'No'}</p>
+                <p>ApplePaySession Available: {applePayStatus.isSupported ? 'Yes' : 'No'}</p>
+                <p>Can Make Payments: {applePayStatus.canMakePayments ? 'Yes' : 'No'}</p>
+                <p>Has Active Card: {applePayStatus.canMakePaymentsWithActiveCard ? 'Yes' : 'No'}</p>
+                <p>Domain: {window.location.hostname}</p>
+                {applePayStatus.error && (
+                    <p className="text-red-600">Error: {applePayStatus.error}</p>
+                )}
+
+                {!applePayStatus.canMakePaymentsWithActiveCard && applePayStatus.isSupported && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded p-2 mt-2">
+                        <p className="text-yellow-800 text-xs">
+                            <strong>⚠️ Apple Pay won't show:</strong> No cards in Apple Wallet.
+                            Add a card to Wallet app to see Apple Pay button.
+                        </p>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     if (isLoading) {
@@ -249,10 +342,10 @@ const ExpressCheckoutForm = ({ orderId }) => {
                         <h2 className="text-2xl font-bold text-gray-800 mb-4">Express Checkout</h2>
                         <p className="text-gray-600">Order ID: {orderId}</p>
                     </div>
-                    <div className="bg-white rounded-lg shadow-md p-6">
+                    <div className="bg-white rounded-lg shadow-md p-6 relative">
                         <div className="text-center py-8">
                             <Loader2 className="animate-spin mx-auto mb-4 text-primary" size={32} />
-                            <p className="text-gray-600">Setting up payment options...</p>
+                            <p className="text-gray-600">Loading order details...</p>
                         </div>
                     </div>
                 </div>
@@ -323,25 +416,29 @@ const ExpressCheckoutForm = ({ orderId }) => {
                         </div>
                     )}
 
-                    {/* Processing State */}
-                    {isProcessing && paymentStatus === "processing" && (
-                        <div className="text-center py-8">
-                            <Loader2 className="animate-spin mx-auto mb-4 text-primary" size={32} />
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                                Processing Payment...
-                            </h3>
-                            <p className="text-gray-600">
-                                {deviceInfo.isMobile ?
-                                    "Complete the payment using your device's authentication" :
-                                    "Please complete the payment process"
-                                }
-                            </p>
-                        </div>
-                    )}
+                    {/* Processing State - Removed because it's now shown as overlay */}
 
-                    {/* ExpressCheckout Element */}
-                    {!error && paymentStatus === "idle" && !isProcessing && (
+                    {/* FIXED: Keep ExpressCheckout mounted even during processing */}
+                    {!error && orderDetails && paymentStatus !== "success" && (
                         <>
+                            {/* Show loading overlay during processing */}
+                            {isProcessing && paymentStatus === "processing" && (
+                                <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
+                                    <div className="text-center">
+                                        <Loader2 className="animate-spin mx-auto mb-4 text-primary" size={32} />
+                                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                            Processing Payment...
+                                        </h3>
+                                        <p className="text-gray-600">
+                                            {deviceInfo.isMobile ?
+                                                "Complete the payment using your device's authentication" :
+                                                "Please complete the payment process"
+                                            }
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="text-center mb-6">
                                 <p className="text-gray-600 mb-2">
                                     Pay quickly with your saved payment methods
@@ -353,7 +450,7 @@ const ExpressCheckoutForm = ({ orderId }) => {
                                 )}
                             </div>
 
-                            <div className="mb-6">
+                            <div className="mb-6 relative">
                                 <ExpressCheckoutElement
                                     options={{
                                         buttonHeight: deviceInfo.isMobile ? 48 : 40,
@@ -377,10 +474,14 @@ const ExpressCheckoutForm = ({ orderId }) => {
                                     onCancel={() => {
                                         console.log('Payment cancelled by user');
                                         setPaymentStatus("idle");
+                                        setIsProcessing(false);
                                     }}
                                     onLoadError={(error) => {
                                         console.error('ExpressCheckout load error:', error);
                                         setError('Failed to load payment options. Please try a different payment method.');
+                                    }}
+                                    onReady={() => {
+                                        console.log('✅ ExpressCheckout element ready');
                                     }}
                                 />
                             </div>
@@ -394,6 +495,7 @@ const ExpressCheckoutForm = ({ orderId }) => {
                                         onClick={handleBackToPaymentMethods}
                                         variant="outline"
                                         className="w-full border-gray-300 text-gray-700"
+                                        disabled={isProcessing}
                                     >
                                         More Payment Options
                                     </Button>
@@ -402,6 +504,9 @@ const ExpressCheckoutForm = ({ orderId }) => {
                         </>
                     )}
                 </div>
+
+                {/* Apple Pay Debug Component */}
+                <ApplePayDebug />
 
                 {/* Device Info for Debugging (Development Only) */}
                 {import.meta.env.DEV && (
@@ -412,7 +517,7 @@ const ExpressCheckoutForm = ({ orderId }) => {
                         <p>Android: {deviceInfo.isAndroid.toString()}</p>
                         <p>Safari: {deviceInfo.isSafari.toString()}</p>
                         <p>Chrome: {deviceInfo.isChrome.toString()}</p>
-                        <p>Client Secret: {clientSecret ? "Set" : "Not Set"}</p>
+                        <p>Order Loaded: {orderDetails ? "Yes" : "No"}</p>
                         <p>User Agent: {navigator.userAgent.substring(0, 50)}...</p>
                     </div>
                 )}
