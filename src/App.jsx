@@ -5,6 +5,7 @@ import MenuPage from "./pages/ordering/MenuPage";
 import CartPage from "./pages/ordering/CartPage";
 import CheckoutPage from "./pages/ordering/CheckoutPage";
 import PaymentMethodSelection from "./pages/payments/PaymentMethodSelection";
+import ExpressCheckoutPayment from "./pages/payments/ExpressCheckoutPayment";
 import StripePaymentPage from "./pages/payments/StripePaymentPage";
 import PayPalPaymentPage from "./pages/payments/PayPalPaymentPage";
 import ApplePayPaymentPage from "./pages/payments/ApplePayPaymentPage";
@@ -35,6 +36,9 @@ function AppRoutes() {
               path="/payment-method"
               element={<PaymentMethodSelection />}
             />
+            {/* New ExpressCheckout route - Primary recommendation */}
+            <Route path="/payment/express-checkout" element={<ExpressCheckoutPayment />} />
+            {/* Legacy payment routes - Still supported */}
             <Route path="/payment/stripe" element={<StripePaymentPage />} />
             <Route path="/payment/paypal" element={<PayPalPaymentPage />} />
             <Route path="/payment/applepay" element={<ApplePayPaymentPage />} />
