@@ -1,8 +1,9 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { CartContext } from "../CartContext";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
-import { X, Plus, Minus, ChevronDown, ChevronUp } from "lucide-react";
+import { X, Plus, Minus, ChevronDown, ChevronUp, Edit2 } from "lucide-react";
+import CustomizationModal from "./CustomizationModal";
 
 const MiniCart = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -12,11 +13,30 @@ const MiniCart = ({ isOpen, onClose }) => {
     decrementQuantity,
     removeFromCart,
     subtotal,
+    updateCartItem,
   } = useContext(CartContext);
+
+  const [editingItem, setEditingItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleCheckout = () => {
     onClose();
     navigate("/checkout");
+  };
+
+  const handleEditItem = (item) => {
+    setEditingItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleUpdateCartItem = (updatedItem) => {
+    updateCartItem(editingItem.cartItemId, updatedItem);
+    handleCloseModal();
   };
 
   return (
@@ -39,7 +59,7 @@ const MiniCart = ({ isOpen, onClose }) => {
           ) : (
             cart.map((item) => (
               <div
-                key={item.id}
+                key={item.cartItemId}
                 className="border-b pb-3 mb-3"
               >
                 <div className="flex justify-between items-start mb-2">
@@ -48,12 +68,12 @@ const MiniCart = ({ isOpen, onClose }) => {
                     <p className="text-primary">
                       ${(item.totalPrice || item.price || 0).toFixed(2)}
                     </p>
-                    
+
                     {item.customizations && item.customizations.length > 0 && (
                       <div className="mt-2 pl-3 border-l-2 border-secondary">
                         {item.customizations.map((customization, idx) => (
                           <div key={idx} className="text-sm text-gray-600 whitespace-normal">
-                            • {customization.name} 
+                            • {customization.name}
                             {customization.price > 0 && (
                               <span className="text-primary"> (+${customization.price.toFixed(2)})</span>
                             )}
@@ -83,14 +103,27 @@ const MiniCart = ({ isOpen, onClose }) => {
                         <Plus size={16} />
                       </Button>
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="mt-1"
-                      onClick={() => removeFromCart(item.cartItemId)}
-                    >
-                      Remove
-                    </Button>
+                    <div className="flex gap-2">
+                      {item.customizations && item.customizations.length > 0 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8"
+                          onClick={() => handleEditItem(item)}
+                        >
+                          <Edit2 size={14} className="mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="h-8"
+                        onClick={() => removeFromCart(item.cartItemId)}
+                      >
+                        Remove
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -108,6 +141,16 @@ const MiniCart = ({ isOpen, onClose }) => {
           </Button>
         </div>
       </div>
+
+      {isModalOpen && editingItem && (
+        <CustomizationModal
+          menuItemId={editingItem.id}
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onAddToCart={handleUpdateCartItem}
+          existingCustomizations={editingItem.customizations}
+        />
+      )}
     </div>
   );
 };

@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import { getMenuItemCustomizations } from "../services/menuService";
 import { Button } from "./ui/button";
 
-const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
+const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart, existingCustomizations = [] }) => {
   const [menuItem, setMenuItem] = useState(null);
   const [customizations, setCustomizations] = useState([]);
   const [selectedOptions, setSelectedOptions] = useState({});
   const [error, setError] = useState("");
-  
+
   // For debugging
   useEffect(() => {
     console.log("Selected options updated:", selectedOptions);
@@ -34,27 +34,32 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
         customizationsByGroup[c.groupName].push(c);
       });
 
-      // Initialize selections based on groupName and choiceType
+      // Initialize selections based on existing customizations if editing
       const initialSelections = {};
       Object.entries(customizationsByGroup).forEach(([groupName, groupItems]) => {
         const firstItem = groupItems[0];
-        
+
         if (firstItem.choiceType === 'single') {
-          // For single choice, find the default option or use the first one
-          const defaultOption = groupItems.find(item => item.isDefault);
-          if (defaultOption) {
-            initialSelections[groupName] = defaultOption.id;
-          } else if (groupItems.length > 0) {
-            // If no default, select the first option for single choice
-            initialSelections[groupName] = groupItems[0].id;
+          // For single choice, find the existing selection or use default
+          const existingOption = existingCustomizations.find(ec =>
+            groupItems.some(gi => gi.id === ec.id && gi.groupName === groupName)
+          );
+
+          if (existingOption) {
+            initialSelections[groupName] = existingOption.id;
+          } else {
+            // If no existing selection, find default or use first
+            const defaultOption = groupItems.find(item => item.isDefault);
+            initialSelections[groupName] = defaultOption ? defaultOption.id : groupItems[0].id;
           }
         } else if (firstItem.choiceType === 'multiple') {
-          // For multiple choice, initialize with empty array (nothing selected)
-          // This change makes multiple-choice options opt-in rather than opt-out
-          initialSelections[groupName] = [];
+          // For multiple choice, initialize with existing selections
+          initialSelections[groupName] = existingCustomizations
+            .filter(ec => groupItems.some(gi => gi.id === ec.id && gi.groupName === groupName))
+            .map(ec => ec.id);
         }
       });
-      
+
       setSelectedOptions(initialSelections);
     } catch (err) {
       console.error("Failed to fetch customizations:", err);
@@ -72,12 +77,12 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
         };
       } else {
         // For multiple choice items, toggle selection
-        const selectedGroup = Array.isArray(prev[customization.groupName]) 
-          ? [...prev[customization.groupName]] 
+        const selectedGroup = Array.isArray(prev[customization.groupName])
+          ? [...prev[customization.groupName]]
           : [];
-        
+
         const isSelected = selectedGroup.includes(customization.id);
-        
+
         if (isSelected) {
           // Remove if already selected
           return {
@@ -100,7 +105,7 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
 
     // Gather all selected customization IDs from all groups
     let selectedCustomizationIds = [];
-    
+
     // Process different groups and their selections
     Object.entries(selectedOptions).forEach(([groupName, selection]) => {
       if (Array.isArray(selection)) {
@@ -113,7 +118,7 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
     });
 
     // Find the actual customization objects based on selected IDs
-    const selectedCustomizations = customizations.filter(c => 
+    const selectedCustomizations = customizations.filter(c =>
       selectedCustomizationIds.includes(c.id)
     );
 
@@ -182,7 +187,7 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
                     {items.map((customization) => {
                       const isSingle = customization.choiceType === "single";
                       const groupSelections = selectedOptions[customization.groupName];
-                      
+
                       const isChecked = isSingle
                         ? groupSelections === customization.id
                         : Array.isArray(groupSelections) && groupSelections.includes(customization.id);
@@ -219,7 +224,7 @@ const CustomizationModal = ({ menuItemId, isOpen, onClose, onAddToCart }) => {
               onClick={handleAddToCart}
               className="w-full bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary"
             >
-              Add to Cart
+              {existingCustomizations.length > 0 ? "Update Item" : "Add to Cart"}
             </Button>
           </>
         )}
