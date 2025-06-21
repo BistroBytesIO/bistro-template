@@ -1,48 +1,111 @@
-import React, { createContext, useState, useEffect } from 'react';
-import api from './services/api';
+// File: src/contexts/AuthContext.jsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getCurrentUser, signOut, fetchAuthSession } from 'aws-amplify/auth';
+import api from '../services/api';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
+
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [customerProfile, setCustomerProfile] = useState(null);
+    const [rewardsStatus, setRewardsStatus] = useState(null);
 
+    // Check authentication status on app load
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-            } catch (error) {
-                console.error("Error parsing stored user data, clearing localStorage.");
-                localStorage.removeItem('user');
-            }
-        }
+        checkAuthStatus();
     }, []);
 
-    const login = async (email, password) => {
+    const checkAuthStatus = async () => {
         try {
-            const response = await api.post('/auth/login', { email, password });
-            console.log("Login response:", response.data);
-    
-            // Ensure the role is stored correctly
-            response.data.role = response.data.role.trim().toUpperCase();  
-            
-            localStorage.setItem('user', JSON.stringify(response.data));
-            setUser(response.data);
+            setIsLoading(true);
+            const currentUser = await getCurrentUser();
+            setUser(currentUser);
+
+            // Get auth session and set API token
+            const session = await fetchAuthSession();
+            if (session.tokens?.idToken) {
+                api.defaults.headers.common['Authorization'] = `Bearer ${session.tokens.idToken}`;
+
+                // Fetch customer profile and rewards
+                await fetchCustomerData();
+            }
         } catch (error) {
-            throw new Error('Invalid credentials');
+            console.log('User not authenticated:', error);
+            setUser(null);
+            setCustomerProfile(null);
+            setRewardsStatus(null);
+
+            // Remove auth header
+            delete api.defaults.headers.common['Authorization'];
+        } finally {
+            setIsLoading(false);
         }
     };
-    
 
-    const logout = (navigate) => {
-        setUser(null);
-        localStorage.removeItem('user');
-        navigate('/login');
+    const fetchCustomerData = async () => {
+        try {
+            const [profileResponse, rewardsResponse] = await Promise.all([
+                api.get('/auth/me'),
+                api.get('/rewards/status')
+            ]);
+
+            setCustomerProfile(profileResponse.data);
+            setRewardsStatus(rewardsResponse.data);
+        } catch (error) {
+            console.error('Error fetching customer data:', error);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await signOut();
+            setUser(null);
+            setCustomerProfile(null);
+            setRewardsStatus(null);
+
+            // Remove auth header
+            delete api.defaults.headers.common['Authorization'];
+
+            console.log('Successfully signed out');
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
+
+    const refreshRewardsStatus = async () => {
+        if (user) {
+            try {
+                const response = await api.get('/rewards/status');
+                setRewardsStatus(response.data);
+            } catch (error) {
+                console.error('Error refreshing rewards status:', error);
+            }
+        }
+    };
+
+    const value = {
+        user,
+        isLoading,
+        customerProfile,
+        rewardsStatus,
+        checkAuthStatus,
+        handleSignOut,
+        fetchCustomerData,
+        refreshRewardsStatus,
+        isAuthenticated: !!user
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, logout }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

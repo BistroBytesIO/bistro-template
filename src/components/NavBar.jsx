@@ -1,15 +1,18 @@
+// File: src/components/NavBar.jsx
 import React, { useState, useEffect, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { CartContext } from "../CartContext";
 import { MiniCartContext } from "@/context/MiniCartContext";
-import { HandPlatter, ScrollText, ShoppingCart, Utensils, Menu, X } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { HandPlatter, ScrollText, ShoppingCart, Utensils, Menu, X, User, LogIn, LogOut, Gift } from "lucide-react";
 
 const NavBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { cart } = useContext(CartContext);
   const { openCart } = useContext(MiniCartContext);
+  const { isAuthenticated, user, customerProfile, rewardsStatus, handleSignOut, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const cartCount = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
@@ -59,6 +62,14 @@ const NavBar = () => {
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname]);
+
+  const handleAuthAction = () => {
+    if (isAuthenticated) {
+      handleSignOut();
+    } else {
+      navigate("/auth/signin");
+    }
+  };
 
   return (
     <nav
@@ -138,6 +149,43 @@ const NavBar = () => {
                 <Utensils />
                 <span className="hidden md:inline">Checkout</span>
               </Button>
+
+              {/* Auth Section */}
+              {isLoading ? (
+                <div className="w-8 h-8 animate-pulse bg-gray-300 rounded-full"></div>
+              ) : isAuthenticated ? (
+                <>
+                  {/* Rewards Button */}
+                  <Button
+                    onClick={() => navigate("/rewards")}
+                    className="flex items-center gap-2 bg-green-600 text-white hover:bg-green-700"
+                  >
+                    <Gift />
+                    <span className="hidden md:inline">
+                      Rewards {rewardsStatus?.availablePoints ? `(${rewardsStatus.availablePoints})` : ''}
+                    </span>
+                  </Button>
+
+                  {/* User Profile/Logout */}
+                  <Button
+                    onClick={handleAuthAction}
+                    className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    <LogOut />
+                    <span className="hidden md:inline">
+                      {customerProfile?.firstName || 'User'}
+                    </span>
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  onClick={handleAuthAction}
+                  className="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <LogIn />
+                  <span className="hidden md:inline">Sign In</span>
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -194,6 +242,39 @@ const NavBar = () => {
                 <Utensils className="mr-2" />
                 Checkout
               </Button>
+
+              {/* Mobile Auth Section */}
+              {!isLoading && (
+                <>
+                  {isAuthenticated ? (
+                    <>
+                      <Button
+                        onClick={() => navigate("/rewards")}
+                        className="bg-green-600 text-white hover:bg-green-700 w-full"
+                      >
+                        <Gift className="mr-2" />
+                        Rewards {rewardsStatus?.availablePoints ? `(${rewardsStatus.availablePoints})` : ''}
+                      </Button>
+
+                      <Button
+                        onClick={handleAuthAction}
+                        className="bg-blue-600 text-white hover:bg-blue-700 w-full"
+                      >
+                        <LogOut className="mr-2" />
+                        Sign Out ({customerProfile?.firstName || 'User'})
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={handleAuthAction}
+                      className="bg-blue-600 text-white hover:bg-blue-700 w-full"
+                    >
+                      <LogIn className="mr-2" />
+                      Sign In
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
